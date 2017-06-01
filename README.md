@@ -1,2 +1,2 @@
 # HGConfigure
-Scripts for configuring homegenie
+Scripts for configuring homegenie using powershell
