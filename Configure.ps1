@@ -17,22 +17,76 @@
 
 [cmdletbinding()]
 Param(
-    [String]$ServerIp = "http://192.168.0.81:80"
+    [String]$ServerIp = "192.168.0.81",
+    [int]$port = 80,
+    [string] $proto = "http"
 )
 
+$ServerAddress = ("{0}://{1}:{2}" -f $proto, $ServerIp, $port)
+$ServerAddress
+
+$VerbosePreference = "Continue"
 
 ########################## Programs ##########################
 
-# Disable Programs
+# Getting Programs
 $programs = invoke-restMethod `
-    -uri ("$ServerIp/api/HomeAutomation.HomeGenie/Automation/Programs.List/") `
+    -uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Automation/Programs.List/") `
     -verbose:$false
 
+# $programs | Select Name, Address |Sort-Object Address
+
+# Disable Programs
 foreach ($program in ($programs | Where-Object {$_.IsEnabled -eq $true})) {
     write-verbose ("Disabling program: {0} Address: {1}" -f $program.Name, $program.Address)
     $null = invoke-restMethod `
-        -uri ("$ServerIp/api/HomeAutomation.HomeGenie/Automation/Programs.Disable/$($program.Address)")`
+        -uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Automation/Programs.Disable/$($program.Address)")`
         -verbose:$false
+}
+
+# Delete programs
+$programsToDelete = @(
+    @{Name = "Group Lights ON"; Address = 6},
+    @{Name = "Group Lights OFF"; Address = 7},
+    @{Name = "Sunrise Colors Scenario"; Address = 8},
+    @{Name = "Level Memory"; Address = 16},
+    @{Name = "Philips Hue Bridge"; Address = 26},
+    # @{Name = "Zone Sensors"; Address = 29},
+    #@{Name = "Weather Underground"; Address = 34},
+    @{Name = "Level Poll"; Address = 39},
+    @{Name = "Meter Watt Poll"; Address = 40},
+    #@{Name = "IR/RF remote control events forwarding"; Address = 73},
+    #@{Name = "Meter.Watts events forwarding"; Address = 74},
+    #@{Name = "Status.Level events forwarding"; Address = 75},
+    #@{Name = "Sensor.* events forwarding"; Address = 76},
+    #@{Name = "MQTT Network"; Address = 77},
+    @{Name = "Basic Thermostat"; Address = 78},
+    @{Name = "Energy Monitor"; Address = 81},
+    @{Name = "Energy Saving Mode"; Address = 82},
+    @{Name = "Set to 100% when switched on"; Address = 84},
+    @{Name = "Generic IP Camera"; Address = 88},
+    @{Name = "Security Alarm System"; Address = 90},
+    @{Name = "Query on Wake Up"; Address = 91},
+    @{Name = "Z-Wave Thermostat Poll"; Address = 92},
+    #@{Name = "Multi Instance/Channel  Virtual Modules"; Address = 93},
+    #@{Name = "Turn Off Delay"; Address = 112},
+    @{Name = "X10 RF Virtual Modules Mapper"; Address = 121},
+    @{Name = "E-Mail Account"; Address = 142},
+    @{Name = "Favourites Links"; Address = 180},
+    @{Name = "Windows Phone Push Notification Service"; Address = 200},
+    @{Name = "Virtual Modules Demo"; Address = 400},
+    @{Name = "Demo - Toggle Door"; Address = 401},
+    @{Name = "Demo - Motion Detected"; Address = 402},
+    @{Name = "Demo - Simulate Temperature"; Address = 403},
+    @{Name = "Demo - Simulate Luminance"; Address = 404}
+    #,@{Name = "IR Remote Controller"; Address = 505}
+)
+
+foreach ($program in $programsToDelete) {
+    write-verbose ("Deleting program: {0} Address: {1}" -f $program.Name, $program.Address)
+     $null = invoke-restMethod `
+         -uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Automation/Programs.Delete/$($program.Address)")`
+         -verbose:$false
 }
 
 ########################## Set Location ##########################
@@ -45,29 +99,29 @@ $locationData = @{
 
 write-verbose "setting location"
 invoke-restMethod `
-    -uri ("$ServerIp/api/HomeAutomation.HomeGenie/Config/System.Configure/Location.Set/") `
+    -uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Config/System.Configure/Location.Set/") `
     -body (convertto-json $locationData -compress) `
     -Method POST `
     -verbose:$false
 
 # Get Location
 write-verbose "get location"
-invoke-restMethod -uri ("$ServerIp/api/HomeAutomation.HomeGenie/Config/System.Configure/Location.Get/") -verbose:$false
+invoke-restMethod -uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Config/System.Configure/Location.Get/") -verbose:$false
 
 ########################## Interfaces ##########################
 
 # Only gets enabled interfaces:
-#$interfaces = invoke-restMethod -uri ("$ServerIp/api/HomeAutomation.HomeGenie/Config/Interfaces.List/")
+#$interfaces = invoke-restMethod -uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Config/Interfaces.List/")
 
 # Get Interfaces
 $interfaces = invoke-restMethod `
-    -uri ("$ServerIp/api/HomeAutomation.HomeGenie/Config/Interfaces.ListConfig/") `
+    -uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Config/Interfaces.ListConfig/") `
     -verbose:$false
 
 foreach ($interface in ($interfaces | Where-Object {$_.IsEnabled -eq $true})) {
     write-verbose ("Disabling interface: {0}" -f $interface.Domain)
     $null = invoke-restMethod `
-         -uri ("$ServerIp/api/MIGService.Interfaces/$($interface.Domain)/IsEnabled.Set/0/") `
+         -uri ("$ServerAddress/api/MIGService.Interfaces/$($interface.Domain)/IsEnabled.Set/0/") `
          -verbose:$false
 }
 
@@ -82,51 +136,55 @@ foreach ($interface in ($interfaces | Where-Object {$_.IsEnabled -eq $true})) {
 $interfaceFileName = "C:\Users\Davidw\Source\repos\TexecomInterface\MIG-Interface\Output\MIG-TexecomInterface.zip"
 
 write-verbose ("Uploading Interface {0}" -f $interfaceFileName)
-$resp = invoke-restMethod -InFile $interfaceFileName -uri ("$ServerIp/api/HomeAutomation.HomeGenie/Config/Interface.Import/") `
-   -Method POST `
-   -ContentType "multipart/form-data"`
-   -verbose:$false
+$resp = invoke-restMethod `
+    -InFile $interfaceFileName `
+    -uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Config/Interface.Import/") `
+    -Method POST `
+    -ContentType "multipart/form-data"`
+    -verbose:$false
 
+    $resp |fl 
 Write-verbose ("`n*******************************`n" + $resp.ResponseValue + "`n*******************************")
 
 write-verbose "Installing uploaded interface"
 # TODO check response value
 $null = invoke-restMethod `
-    -uri "$ServerIp/api/HomeAutomation.HomeGenie/Config/Interface.Install" `
+    -uri "$ServerAddress/api/HomeAutomation.HomeGenie/Config/Interface.Install" `
     <# -contentType "application/x-zip-compressed" #> `
     -verbose:$false
 
 # write-verbose "installing interface using download"
 # Add-Type -AssemblyName System.Web
 # $interfaceDownloadUrl = [System.Web.HttpUtility]::UrlEncode("https://github.com/davidwallis3101/HomegenieEchoBridge/blob/master/MIG-EchoBridge.zip")
-# invoke-restMethod -uri ("$ServerIp/api/HomeAutomation.HomeGenie/Config/System.Configure/Interface.Import/$interfaceDownloadUrl")
+# invoke-restMethod -uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Config/System.Configure/Interface.Import/$interfaceDownloadUrl")
 
 ########################## Disable Inbuilt Schedules ##########################
 
 # Disable Existing Schedules
 write-verbose "Getting schedules"
 $schedules = invoke-restMethod `
-    -uri ("$ServerIp/api/HomeAutomation.HomeGenie/Automation/Scheduling.List") `
+    -uri "$ServerAddress/api/HomeAutomation.HomeGenie/Automation/Scheduling.List" `
     -verbose:$false
 
 foreach ($schedule in ($schedules | where-object {$_.IsEnabled -eq $true})) {
     write-verbose ("Disabling schedule: {0}" -f $schedule.Name)
     $null = invoke-restMethod `
-        -uri ("$ServerIp/api/HomeAutomation.HomeGenie/Automation/Scheduling.Disable/$($schedule.Name)") `
+        -uri "$ServerAddress/api/HomeAutomation.HomeGenie/Automation/Scheduling.Disable/$($schedule.Name)" `
         -verbose:$false
 }
 
 
 # Create Groups - this will add duplicates!
-invoke-restMethod `
-    -uri ("$ServerIp/api/HomeAutomation.HomeGenie/Config/Groups.Add/Control/") `
+write-verbose "Creating Groups"
+$null = invoke-restMethod `
+    -uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Config/Groups.Add/Control/") `
     -ContentType 'application/x-www-form-urlencoded' `
     -Body "AGroupName" `
     -Method Post `
     -verbose:$false
 
 # Modify group
-send json to http://192.168.0.81/api/HomeAutomation.HomeGenie/Config/Groups.Save/
+# send json to http://192.168.0.81/api/HomeAutomation.HomeGenie/Config/Groups.Save/
 
 $exampleJSON = @"
 [
@@ -338,26 +396,44 @@ $exampleJSON = @"
   ]
 "@
 
-invoke-restMethod `
-    -uri ("$ServerIp/api/HomeAutomation.HomeGenie/Config/Groups.Save/") `
-    -Body $exampleJson `
-    -Method Post `
-    -verbose:$false
+# $null = invoke-restMethod `
+#     -uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Config/Groups.Save/") `
+#     -Body $exampleJson `
+#     -Method Post `
+#     -verbose:$false
 
 ######################### Restart ##########################
-# invoke-restMethod -uri ("$ServerIp/api/HomeAutomation.HomeGenie/Config/System.Configure/Service.Restart/")
+# invoke-restMethod -uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Config/System.Configure/Service.Restart/")
 
 
 # Backup
+write-verbose "Backing up $ServerIp"
 $OutputFolder = "\\Iomega\Data\Homegenie\Backups" # Change this to the place where you want to save backups to.
-$outputFile = "{0}\homegenie_backup_config_{1}_{2}.zip" -f $OutputFolder, $ServerIp.Split(".")[3], (get-date -uformat "%d-%m-%Y_%H-%M-%S")
+$outputFile = "{0}\homegenie_backup_config_{1}_{2}.zip" -f $OutputFolder, ($ServerIp.Split(".")[3]), (get-date -uformat "%d-%m-%Y_%H-%M-%S")
 
-Invoke-WebRequest `
-    -Uri "$ServerIp/api/HomeAutomation.HomeGenie/Config/System.Configure/System.ConfigurationBackup" `
-    -OutFile $outputFile
+$null = Invoke-WebRequest `
+    -Uri "$ServerAddress/api/HomeAutomation.HomeGenie/Config/System.Configure/System.ConfigurationBackup" `
+    -OutFile $outputFile `
+    -verbose:$false
 
+write-verbose "Backed up $serverIP to $outputFile"
+
+# Install Package
+
+
+#$packageUrl = "https://raw.githubusercontent.com/genielabs/homegenie-packages/master/packages/AVR/Yamaha%20AVR"
+#$packageUrl = "https://raw.githubusercontent.com/genielabs/homegenie-packages/master/packages/Irrigation%20Control/Garden%20Sprinkler%20System"
+$packageUrl = "https://raw.githubusercontent.com/genielabs/homegenie-packages/master/packages/Security/Antijamming"
+
+write-verbose "Installing package from $packageUrl"
+
+invoke-restMethod `
+    -Uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Config/Package.Install/{0}" -f [System.Web.HttpUtility]::UrlEncode($packageUrl)) `
+    -verbose:$false
+
+#     http://192.168.0.81/api/HomeAutomation.HomeGenie/Config/Package.Install/https%3A%2F%2Fraw.githubusercontent.com%2Fgenielabs%2Fhomegenie-packages%2Fmaster%2Fpackages%2FAVR%2FYamaha%2520AVR
 ######################### TODO ##########################
-# Install Packages
+
 
 
 # event history
