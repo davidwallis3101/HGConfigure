@@ -420,9 +420,7 @@ write-verbose "Backed up $serverIP to $outputFile"
 
 # Install Package
 
-
 #$packageUrl = "https://raw.githubusercontent.com/genielabs/homegenie-packages/master/packages/AVR/Yamaha%20AVR"
-#$packageUrl = "https://raw.githubusercontent.com/genielabs/homegenie-packages/master/packages/Irrigation%20Control/Garden%20Sprinkler%20System"
 $packageUrl = "https://raw.githubusercontent.com/genielabs/homegenie-packages/master/packages/Security/Antijamming"
 
 write-verbose "Installing package from $packageUrl"
@@ -432,11 +430,12 @@ invoke-restMethod `
     -verbose:$false
 
 #     http://192.168.0.81/api/HomeAutomation.HomeGenie/Config/Package.Install/https%3A%2F%2Fraw.githubusercontent.com%2Fgenielabs%2Fhomegenie-packages%2Fmaster%2Fpackages%2FAVR%2FYamaha%2520AVR
+
 ######################### TODO ##########################
 
+#Delete empty groups
 
-
-# event history
+# event history - cookie?
 
 # HG.WebApp.Store.set('UI.EventsHistory', true);
 
