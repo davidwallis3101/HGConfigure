@@ -22,19 +22,17 @@ Param(
     [string] $proto = "http"
 )
 
+clear-host 
+
 $ServerAddress = ("{0}://{1}:{2}" -f $proto, $ServerIp, $port)
-$ServerAddress
 
 $VerbosePreference = "Continue"
 
 ########################## Programs ##########################
-
 # Getting Programs
 $programs = invoke-restMethod `
     -uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Automation/Programs.List/") `
     -verbose:$false
-
-# $programs | Select Name, Address |Sort-Object Address
 
 # Disable Programs
 foreach ($program in ($programs | Where-Object {$_.IsEnabled -eq $true})) {
@@ -55,11 +53,11 @@ $programsToDelete = @(
     #@{Name = "Weather Underground"; Address = 34},
     @{Name = "Level Poll"; Address = 39},
     @{Name = "Meter Watt Poll"; Address = 40},
-    #@{Name = "IR/RF remote control events forwarding"; Address = 73},
-    #@{Name = "Meter.Watts events forwarding"; Address = 74},
-    #@{Name = "Status.Level events forwarding"; Address = 75},
-    #@{Name = "Sensor.* events forwarding"; Address = 76},
-    #@{Name = "MQTT Network"; Address = 77},
+    @{Name = "IR/RF remote control events forwarding"; Address = 73},
+    @{Name = "Meter.Watts events forwarding"; Address = 74},
+    @{Name = "Status.Level events forwarding"; Address = 75},
+    @{Name = "Sensor.* events forwarding"; Address = 76},
+    @{Name = "MQTT Network"; Address = 77},
     @{Name = "Basic Thermostat"; Address = 78},
     @{Name = "Energy Monitor"; Address = 81},
     @{Name = "Energy Saving Mode"; Address = 82},
@@ -78,8 +76,8 @@ $programsToDelete = @(
     @{Name = "Demo - Toggle Door"; Address = 401},
     @{Name = "Demo - Motion Detected"; Address = 402},
     @{Name = "Demo - Simulate Temperature"; Address = 403},
-    @{Name = "Demo - Simulate Luminance"; Address = 404}
-    #,@{Name = "IR Remote Controller"; Address = 505}
+    @{Name = "Demo - Simulate Luminance"; Address = 404},
+    @{Name = "IR Remote Controller"; Address = 505}
 )
 
 foreach ($program in $programsToDelete) {
@@ -87,6 +85,48 @@ foreach ($program in $programsToDelete) {
      $null = invoke-restMethod `
          -uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Automation/Programs.Delete/$($program.Address)")`
          -verbose:$false
+}
+
+########################## Groups ##########################
+# Get groups
+$groups = invoke-restMethod `
+-uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Config/Groups.List/Control/") `
+-verbose:$false
+
+write-verbose "Deleting groups with no modules"
+foreach ($group in $groups) {
+  if ($group.Modules.Count -eq 0) {
+      write-verbose ("Deleting group: [{0}]" -f $group.Name)
+      $null = invoke-restMethod `
+          -uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Config/Groups.Delete/Control/") `
+          -ContentType 'application/x-www-form-urlencoded' `
+          -Body $group.Name `
+          -Method Post `
+          -verbose:$false
+  }
+}
+
+$automationGroups = invoke-restMethod `
+-uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Config/Groups.List/Automation/") `
+-verbose:$false
+
+# Getting Programs again
+$programs = invoke-restMethod `
+-uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Automation/Programs.List/") `
+-verbose:$false
+
+foreach ($automationGroup in $automationGroups) {
+  $programsInAutomationGroup = $programs | Where-Object {$_.Group -eq $automationGroup.Name}
+
+  if ($programsInAutomationGroup.Count -eq 0) {
+      write-verbose ("Removing automation group {0} as it has no programs" -f $automationGroup.Name)
+      $null = invoke-restMethod `
+          -uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Config/Groups.Delete/Automation/") `
+          -ContentType 'application/x-www-form-urlencoded' `
+          -Body $automationGroup.Name `
+          -Method Post `
+          -Verbose:$false
+  }
 }
 
 ########################## Set Location ##########################
@@ -97,7 +137,7 @@ $locationData = @{
     'longitude' = -1.5497609000000239;
 }
 
-write-verbose "setting location"
+write-verbose "Setting location"
 invoke-restMethod `
     -uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Config/System.Configure/Location.Set/") `
     -body (convertto-json $locationData -compress) `
@@ -143,8 +183,8 @@ $resp = invoke-restMethod `
     -ContentType "multipart/form-data"`
     -verbose:$false
 
-    $resp |fl 
-Write-verbose ("`n*******************************`n" + $resp.ResponseValue + "`n*******************************")
+# TODO get markdown that is returned from installing the interface
+#Write-verbose ("`n*******************************`n" + $resp.ResponseValue + "`n*******************************")
 
 write-verbose "Installing uploaded interface"
 # TODO check response value
@@ -418,16 +458,16 @@ $null = Invoke-WebRequest `
 
 write-verbose "Backed up $serverIP to $outputFile"
 
-# Install Package
+# Install Package (disabled as dont need anything just yet!)
 
 #$packageUrl = "https://raw.githubusercontent.com/genielabs/homegenie-packages/master/packages/AVR/Yamaha%20AVR"
-$packageUrl = "https://raw.githubusercontent.com/genielabs/homegenie-packages/master/packages/Security/Antijamming"
+# $packageUrl = "https://raw.githubusercontent.com/genielabs/homegenie-packages/master/packages/Security/Antijamming"
 
-write-verbose "Installing package from $packageUrl"
+# write-verbose "Installing package from $packageUrl"
 
-invoke-restMethod `
-    -Uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Config/Package.Install/{0}" -f [System.Web.HttpUtility]::UrlEncode($packageUrl)) `
-    -verbose:$false
+# $null = invoke-restMethod `
+#     -Uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Config/Package.Install/{0}" -f [System.Web.HttpUtility]::UrlEncode($packageUrl)) `
+#     -verbose:$false
 
 ######################### TODO ##########################
 
