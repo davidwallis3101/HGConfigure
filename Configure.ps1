@@ -67,7 +67,7 @@ $programsToDelete = @(
     @{Name = "Query on Wake Up"; Address = 91},
     @{Name = "Z-Wave Thermostat Poll"; Address = 92},
     #@{Name = "Multi Instance/Channel  Virtual Modules"; Address = 93},
-    #@{Name = "Turn Off Delay"; Address = 112},
+    @{Name = "Turn Off Delay"; Address = 112},
     @{Name = "X10 RF Virtual Modules Mapper"; Address = 121},
     @{Name = "E-Mail Account"; Address = 142},
     @{Name = "Favourites Links"; Address = 180},
@@ -145,8 +145,8 @@ invoke-restMethod `
     -verbose:$false
 
 # Get Location
-write-verbose "get location"
-invoke-restMethod -uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Config/System.Configure/Location.Get/") -verbose:$false
+#write-verbose "Get location"
+#invoke-restMethod -uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Config/System.Configure/Location.Get/") -verbose:$false
 
 ########################## Interfaces ##########################
 
@@ -175,7 +175,7 @@ foreach ($interface in ($interfaces | Where-Object {$_.IsEnabled -eq $true})) {
 
 $interfaceFileName = "C:\Users\Davidw\Source\repos\TexecomInterface\MIG-Interface\Output\MIG-TexecomInterface.zip"
 
-write-verbose ("Uploading Interface {0}" -f $interfaceFileName)
+write-verbose ("Uploading Interface: {0}" -f $interfaceFileName)
 $resp = invoke-restMethod `
     -InFile $interfaceFileName `
     -uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Config/Interface.Import/") `
