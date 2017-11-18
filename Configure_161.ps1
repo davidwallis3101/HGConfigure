@@ -83,8 +83,8 @@ foreach ($program in $programsToDelete) {
 ########################## Groups ##########################
 # Get groups
 $groups = invoke-restMethod `
--uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Config/Groups.List/Control/") `
--verbose:$false
+    -uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Config/Groups.List/Control/") `
+    -verbose:$false
 
 write-verbose "Deleting groups with no modules"
 foreach ($group in $groups) {
@@ -99,9 +99,19 @@ foreach ($group in $groups) {
   }
 }
 
+# Delete Color lights group
+write-verbose "Deleting color lights group"
+$null = invoke-restMethod `
+    -uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Config/Groups.Delete/Control/") `
+    -ContentType 'application/x-www-form-urlencoded' `
+    -Body "Color Lights" `
+    -Method Post `
+    -verbose:$false
+
+
 $automationGroups = invoke-restMethod `
--uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Config/Groups.List/Automation/") `
--verbose:$false
+    -uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Config/Groups.List/Automation/") `
+    -verbose:$false
 
 # Getting Programs again
 $programs = invoke-restMethod `
@@ -131,8 +141,8 @@ $locationData = @{
 }
 
 write-verbose "Setting location"
-invoke-restMethod `
-    -uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Config/System.Configure/Location.Set/") `
+$null = invoke-restMethod `
+    -uri "$ServerAddress/api/HomeAutomation.HomeGenie/Config/System.Configure/Location.Set/" `
     -body (convertto-json $locationData -compress) `
     -Method POST `
     -verbose:$false
