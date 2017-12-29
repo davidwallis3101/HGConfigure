@@ -19,6 +19,104 @@ Param(
     [String]$Server = "http://10.4.1.4:80"
 )
 
+function Invoke-MultipartFormDataUpload {
+    [CmdletBinding()]
+    PARAM
+    (
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$InFile,
+
+        [string]$ContentType,
+
+        [parameter(Mandatory = $true)][ValidateNotNullOrEmpty()]
+        [Uri]$Uri,
+
+        [System.Management.Automation.PSCredential]$Credential
+    )
+
+    BEGIN
+    {
+        if (-not (Test-Path $InFile))
+        {
+            $errorMessage = ("File {0} missing or unable to read." -f $InFile)
+            $exception =  New-Object System.Exception $errorMessage
+            $errorRecord = New-Object System.Management.Automation.ErrorRecord $exception, 'MultipartFormDataUpload', ([System.Management.Automation.ErrorCategory]::InvalidArgument), $InFile
+            $PSCmdlet.ThrowTerminatingError($errorRecord)
+        }
+
+        if (-not $ContentType)
+        {
+            Add-Type -AssemblyName System.Web
+
+            $mimeType = [System.Web.MimeMapping]::GetMimeMapping($InFile)
+
+            if ($mimeType)
+            {
+                $ContentType = $mimeType
+            }
+            else
+            {
+                $ContentType = "application/octet-stream"
+            }
+        }
+    }
+    PROCESS
+    {
+        Add-Type -AssemblyName System.Net.Http
+
+        $httpClientHandler = New-Object System.Net.Http.HttpClientHandler
+
+        if ($Credential) {
+            $networkCredential = New-Object System.Net.NetworkCredential @($Credential.UserName, $Credential.Password)
+            $httpClientHandler.Credentials = $networkCredential
+        }
+
+        $httpClient = New-Object System.Net.Http.Httpclient $httpClientHandler
+
+        $packageFileStream = New-Object System.IO.FileStream @($InFile, [System.IO.FileMode]::Open)
+
+        $contentDispositionHeaderValue = New-Object System.Net.Http.Headers.ContentDispositionHeaderValue "form-data"
+        $contentDispositionHeaderValue.Name = "fileData"
+
+        # Modified for HG as regex looks for quotes around the file name
+        $contentDispositionHeaderValue.FileName = '"{0}"' -f (Split-Path $InFile -leaf)
+
+        $streamContent = New-Object System.Net.Http.StreamContent $packageFileStream
+        $streamContent.Headers.ContentDisposition = $contentDispositionHeaderValue
+        $streamContent.Headers.ContentType = New-Object System.Net.Http.Headers.MediaTypeHeaderValue $ContentType
+
+        $content = New-Object System.Net.Http.MultipartFormDataContent
+        $content.Add($streamContent)
+
+        try {
+            $response = $httpClient.PostAsync($Uri, $content).Result
+
+            if (!$response.IsSuccessStatusCode) {
+                $responseBody = $response.Content.ReadAsStringAsync().Result
+                $errorMessage = "Status code {0}. Reason {1}. Server reported the following message: {2}." -f $response.StatusCode, $response.ReasonPhrase, $responseBody
+
+                throw [System.Net.Http.HttpRequestException] $errorMessage
+            }
+
+            return $response.Content.ReadAsStringAsync().Result
+        }
+        catch [Exception] {
+            $PSCmdlet.ThrowTerminatingError($_)
+        }
+        finally {
+            if($null -ne $httpClient) {
+                $httpClient.Dispose()
+            }
+
+            if($null -ne $response) {
+                $response.Dispose()
+            }
+        }
+    }
+    END { }
+}
+
 
 ########################## Programs ##########################
 
@@ -27,7 +125,7 @@ $programs = invoke-restMethod `
     -uri ($Server + "/api/HomeAutomation.HomeGenie/Automation/Programs.List/") `
     -verbose:$false
 
-foreach ($program in ($programs|where {$_.IsEnabled -eq $true})) {
+foreach ($program in ($programs|Where-Object {$_.IsEnabled -eq $true})) {
     write-verbose ("Disabling program: {0} Address: {1}" -f $program.Name, $program.Address)
     $null = invoke-restMethod `
         -uri ($Server + "/api/HomeAutomation.HomeGenie/Automation/Programs.Disable/$($program.Address)")`
@@ -63,7 +161,7 @@ $interfaces = invoke-restMethod `
     -uri ($Server + "/api/HomeAutomation.HomeGenie/Config/Interfaces.ListConfig/") `
     -verbose:$false
 
-foreach ($interface in ($interfaces|where {$_.IsEnabled -eq $true})) {
+foreach ($interface in ($interfaces|Where-Object {$_.IsEnabled -eq $true})) {
     write-verbose ("Disabling interface: {0}" -f $interface.Domain)
     $null = invoke-restMethod `
          -uri ($Server + "/api/MIGService.Interfaces/$($interface.Domain)/IsEnabled.Set/0/") `
@@ -80,13 +178,18 @@ foreach ($interface in ($interfaces|where {$_.IsEnabled -eq $true})) {
 
 $interfaceFileName = "c:\users\davidw\desktop\MIG-Echobridge.zip"
 
-write-verbose ("Uploading Interface {0}" -f $interfaceFileName)
-$resp = invoke-restMethod -InFile $interfaceFileName -uri ($Server + "/api/HomeAutomation.HomeGenie/Config/Interface.Import/") `
-   -Method POST `
-   -ContentType "multipart/form-data"`
-   -verbose:$false
+write-verbose ("Uploading Interface: {0}" -f $interfaceFileName)
 
-Write-verbose ("`n*******************************`n" + $resp.ResponseValue + "`n*******************************")
+$resp = Invoke-MultipartFormDataUpload `
+    -InFile $interfaceFileName `
+    -uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Config/Interface.Import/") `
+    -contentType "application/form-data" `
+    -Verbose
+
+$msg = $resp |ConvertFrom-Json
+
+# There is a bug in that the wrong markdown is returned when uploading an interface
+Write-verbose ("`n*******************************`n" + $msg.ResponseValue + "`n*******************************")
 
 write-verbose "Installing uploaded interface"
 # TODO check response value
@@ -100,15 +203,15 @@ $null = (invoke-restMethod `
 # $interfaceDownloadUrl = [System.Web.HttpUtility]::UrlEncode("https://github.com/davidwallis3101/HomegenieEchoBridge/blob/master/MIG-EchoBridge.zip")
 # invoke-restMethod -uri ($Server + "/api/HomeAutomation.HomeGenie/Config/System.Configure/Interface.Import/$interfaceDownloadUrl")
 
-########################## Disable Inbuilt Schedules ##########################
 
-# Disable Existing Schedules
+########################## Get Schedules ##########################
 write-verbose "Getting schedules"
 $schedules = invoke-restMethod `
     -uri ($Server + "/api/HomeAutomation.HomeGenie/Automation/Scheduling.List") `
     -verbose:$false
 
-foreach ($schedule in ($schedules|where {$_.IsEnabled -eq $true})) {
+########################## Disable Schedules ##########################
+foreach ($schedule in ($schedules| Where-Object {$_.IsEnabled -eq $true})) {
     write-verbose ("Disabling schedule: {0}" -f $schedule.Name)
     $null = invoke-restMethod `
         -uri ($Server + "/api/HomeAutomation.HomeGenie/Automation/Scheduling.Disable/$($schedule.Name)")`
