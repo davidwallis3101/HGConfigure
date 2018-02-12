@@ -175,3 +175,16 @@ foreach ($schedule in ($schedules | where-object {$_.IsEnabled -eq $true})) {
         -uri "$ServerAddress/api/HomeAutomation.HomeGenie/Automation/Scheduling.Disable/$($schedule.Name)" `
         -verbose:$false
 }
+
+
+# Create Devices Group
+# Check it exists prior
+
+# http://192.168.0.161/api/HomeAutomation.HomeGenie/Config/Groups.Add/Control/
+# add presence detection modules to group
+# Modify full json and post back
+#http://192.168.0.161/api/HomeAutomation.HomeGenie/Config/Groups.Save/
+
+# Name virtual module
+# http://192.168.0.161/api/HomeAutomation.HomeGenie/Config/Modules.Update/
+# update json
