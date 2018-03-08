@@ -21,8 +21,16 @@
         module: wait_for
           host={{ inventory_hostname }}
           port=22
-          delay=10
-        
+          delay=10  
+    
+    - name: Configure gpu memory options in /boot/config.txt
+      lineinfile:
+        dest: /boot/config.txt
+        regexp: "^#?gpu_mem"
+        line: "gpu_mem=16"
+        insertafter: EOF
+        state: present
+            
     - name: set timezone to Europe/London
       timezone:
         name: Europe/London
