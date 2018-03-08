@@ -28,7 +28,7 @@
   - name: set timezone to Asia/Tokyo
   timezone:
     name: Europe/London
-    
+
   - name: install pre-req packages
     apt: name={{item}} state=latest update_cache=yes
     with_items:
