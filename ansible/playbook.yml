@@ -27,7 +27,28 @@
       timezone:
         name: Europe/London
     
-    - name: install pre-req packages
+    - name: Install the package "dirmngr"
+      apt:
+        name: dirmngr
+        state: present
+    
+    - name: Add an apt key by id from a keyserver
+      apt_key:
+        keyserver: keyserver.ubuntu.com
+        id: 36A1D7869245C8950F966E92D8576A8BA88D21E9
+    
+    - name: Add mono 5.4.1.6 repo
+      apt_repository:
+        repo: deb http://download.mono-project.com/repo/debian raspbianstretch/snapshots/5.4.1.6 main
+        state: present
+        filename: 'mono-official.list'
+
+    - name: Update repositories cache and install "mono" package
+      apt:
+        name: mono
+        update_cache: yes 
+        
+    - name: install dot net core / powershell pre-req packages
       apt: name={{item}} state=latest update_cache=yes
       with_items:
       - libunwind8
