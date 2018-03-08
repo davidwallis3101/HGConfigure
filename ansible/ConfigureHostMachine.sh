@@ -15,3 +15,5 @@ ansible-playbook playbook.yml -i 192.168.0.81, --ask-pass --become -c paramiko
 
 ## Diferent sudo password
 ansible-playbook playbook.yml -i 192.168.0.81, --ask-pass --become -c paramiko --ask-become-pass
+
+ansible-playbook playbook.yml -i hosts --ask-pass --become -c paramiko -vvv

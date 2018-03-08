@@ -23,7 +23,7 @@
           port=22
           delay=10
         
-    - name: set timezone to Asia/Tokyo
+    - name: set timezone to Europe/London
       timezone:
         name: Europe/London
     
@@ -40,30 +40,30 @@
       
     - name: Create dotnet directory if it does not exist
       file:
-        path: ~/dotnet
+        path: /home/pi/dotnet
         state: directory
         mode: 0755    
         
     - name: Get dotnet core
       unarchive:
         src: https://github.com/dotnet/core-setup/files/716356/dotnet-ubuntu.16.04-arm.1.2.0-beta-001291-00.tar.gz
-        dest: ~/dotnet
-        creates: ~/dotnet
+        dest: /home/pi/dotnet
+        creates: /home/pi/dotnet
         remote_src: yes
         
     # export PATH=$PATH:$HOME/dotnet    
     
     - name: Create powershell directory if it does not exist
       file:
-        path: ~/powershell
+        path: /home/pi/powershell
         state: directory
         mode: 0755   
     
     - name: Get Powershell 6 core
       unarchive:
         src: https://github.com/PowerShell/PowerShell/releases/download/v6.0.1/powershell-6.0.1-linux-arm32.tar.gz
-        dest: ~/powershell
-        creates: ~/powershell
+        dest: /home/pi/powershell
+        creates: /home/pi/powershell
         remote_src: yes
 
     # - name: Download and extract dotnet-dev-centos-x64.1.0.0-preview2-1-003177.tar.gz
