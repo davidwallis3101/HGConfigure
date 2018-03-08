@@ -1,6 +1,8 @@
 #!/usr/bin/env ansible-playbook
 ---
 - hosts: all
+  become: yes
+  sudo: no
   tasks:
     - name: "update and upgrade apt packages"
       become: true
