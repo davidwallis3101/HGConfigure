@@ -4,7 +4,7 @@
   sudo: yes
   tasks:
   
-  - name: "pdate and upgrade apt packages"
+  - name: "update and upgrade apt packages"
     become: true
     apt:
       upgrade: yes
@@ -24,34 +24,11 @@
         port=22
         delay=10
       become: false
-  
-  - name: Set Time Zone
-    hosts: local
-    remote_user: pi
-    become: yes
-    become_method: sudo
-    gather_facts: false
-    vars:
-    - timezone: 'Europe/London'
-    tasks:
-    - name: Check timezone
-      shell: cat /etc/timezone
-      register: current_timezone
-   
-    - name: Set timezone
-      copy: content={{timezone}}
-            dest=/etc/timezone
-            owner=root
-            group=root
-            mode=0644
-            backup=yes
-      when: current_timezone.stdout != timezone
-      notify:
-      - Update timezone
-    handlers:
-    - name: Update timezone
-      command: dpkg-reconfigure --frontend noninteractive tzdata
-   
+      
+  - name: set timezone to Asia/Tokyo
+  timezone:
+    name: Europe/London
+    
   # https://stackoverflow.com/questions/32087617/error-apt-is-not-a-legal-parameter-of-an-ansible-play/32162351
   - name: Install the package "libunwind8"
     apt:
