@@ -33,6 +33,7 @@
         state: present
 
     - name: copy fail2ban configuration
+      become: true
       copy:
         src: /etc/fail2ban/jail.conf
         dest: /etc/fail2ban/jail.local
