@@ -43,9 +43,9 @@
         state: present
         filename: 'mono-official.list'
 
-    - name: Update repositories cache and install "mono" package
+    - name: Update repositories cache and install "mono-complete" package
       apt:
-        name: mono
+        name: mono-complete
         update_cache: yes 
         
     - name: install dot net core / powershell pre-req packages
