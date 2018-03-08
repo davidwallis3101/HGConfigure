@@ -7,10 +7,10 @@
       apt:
         upgrade: yes
         update_cache: yes
-        # cache_valid_time: 86400 #One day
+        cache_valid_time: 86400 #One day
     
     - name: restart server if required
-      shell: 'sleep 2 && shutdown -r now "Reboot triggered by Ansible" removes=/var/run/reboot-required && sleep 1'
+      shell: 'sleep 2 && shutdown -r now "Reboot triggered by Ansible" removes=/var/run/reboot-required'
       async: 1
       poll: 0
       become: true
