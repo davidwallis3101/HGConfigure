@@ -27,6 +27,22 @@
       timezone:
         name: Europe/London
     
+    - name: install fail2ban package
+      apt: 
+        name: fail2ban
+        state: present
+        
+        sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
+
+    - name: copy fail2ban configuration
+      copy:
+        src: /etc/fail2ban/jail.conf
+        dest: /etc/fail2ban/jail.local
+        owner: root
+        group: root
+        mode: 0644
+        # backup: yes   
+   
     - name: Install the package "dirmngr"
       apt:
         name: dirmngr
