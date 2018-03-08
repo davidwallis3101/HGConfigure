@@ -17,7 +17,7 @@
 
 [cmdletbinding()]
 Param(
-    [String]$ServerIp = "10.4.1.4",
+    [String]$ServerIp = "192.168.0.1",
     [int]$port = 80,
     [string] $proto = "http"
 )
@@ -122,40 +122,12 @@ function Invoke-MultipartFormDataUpload {
 
 clear-host
 
-# Needs Invoke-MsBuild
-# Can be installed from the gallery with install-module invoke-msbuild -Repository psGallery
-
-# Increment text in the file
-# $file = "C:\Users\davidw\source\repos\mig-interface-skelton\MIG-Interface\InterfaceSkelton.cs"
-
-# [regex]$pattern = "FINDME(\d{0,10})"
-# $RESULT = Select-String -path $file -pattern $pattern
-# [int]$version = $RESULT.Matches.Groups[1].Value
-# $version++
-
-# $fileContent = (get-content $file)
-
-# $fileContent -Replace("FINDME(\d{0,10})", "FINDME$($version)") | Set-Content $file
-
-# # trigger the build
-# $Build = Invoke-MsBuild -Path "C:\Users\davidw\source\repos\mig-interface-skelton\MIG-Interface.sln" -ErrorAction Stop
-# If (-not $Build.BuildSucceeded) {
-#     throw "Build Failed"
-# }
-
 $ServerAddress = ("{0}://{1}:{2}" -f $proto, $ServerIp, $port)
 
 $VerbosePreference = "Continue"
 
 
 ########################## Install Interface ##########################
-
-
-write-verbose "Disabling Interface"
-invoke-restMethod `
-    -uri ("$ServerAddress/api/MIGService.Interfaces/Example.InterfaceSkelton/IsEnabled.Set/0/") `
-    -verbose `
-    -TimeoutSec 5
 
 
 # Install Interfaces (Config.cs for this info)
@@ -172,7 +144,8 @@ $resp = Invoke-MultipartFormDataUpload `
     -contentType "application/form-data" `
     -Verbose
 
-$msg = $resp | ConvertFrom-Json
+$msg = $resp |ConvertFrom-Json
+
 
 # invoke-restMethod `
 #     -InFile $interfaceFileName `
@@ -189,13 +162,13 @@ write-verbose "Installing uploaded interface"
 # TODO check response value
 $null = invoke-restMethod `
     -uri "$ServerAddress/api/HomeAutomation.HomeGenie/Config/Interface.Install" `
+    <#  #> `
     -verbose:$false
 
 # Get Interfaces
-$interfaces = invoke-restMethod `
-     -uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Config/Interfaces.ListConfig/") `
-     -verbose:$false
-$interfaces | FL
+# $interfaces = invoke-restMethod `
+#     -uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Config/Interfaces.ListConfig/") `
+#     -verbose:$false
 
 # Disable All
 # foreach ($interface in $Interfaces) {
@@ -209,7 +182,6 @@ $interfaces | FL
 write-verbose "Enabling Interface"
 invoke-restMethod `
     -uri ("$ServerAddress/api/MIGService.Interfaces/Example.InterfaceSkelton/IsEnabled.Set/1/") `
-    -verbose `
-    -TimeoutSec 5
+    -verbose
 
 
