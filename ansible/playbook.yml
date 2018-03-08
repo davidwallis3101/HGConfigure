@@ -9,6 +9,15 @@
         update_cache: yes
         cache_valid_time: 86400 #One day
     
+    - name: Configure gpu memory options in /boot/config.txt
+      lineinfile:
+        dest: /boot/config.txt
+        regexp: "^#?gpu_mem"
+        line: "gpu_mem=16"
+        insertafter: EOF
+        state: present
+        # TODO add notify and handler to reboot?
+    
     - name: restart server if required
       shell: 'sleep 2 && shutdown -r now "Reboot triggered by Ansible" removes=/var/run/reboot-required'
       async: 1
@@ -22,15 +31,7 @@
           host={{ inventory_hostname }}
           port=22
           delay=10  
-    
-    - name: Configure gpu memory options in /boot/config.txt
-      lineinfile:
-        dest: /boot/config.txt
-        regexp: "^#?gpu_mem"
-        line: "gpu_mem=16"
-        insertafter: EOF
-        state: present
-            
+               
     - name: set timezone to Europe/London
       timezone:
         name: Europe/London
@@ -46,7 +47,6 @@
         src: /etc/fail2ban/jail.conf
         dest: /etc/fail2ban/jail.local
         remote_src: yes
-        # backup: yes   
    
     - name: Install the package "dirmngr"
       apt:
@@ -107,18 +107,20 @@
         dest: /home/pi/powershell
         creates: /home/pi/powershell
         remote_src: yes
-
-    # - name: Download and extract dotnet-dev-centos-x64.1.0.0-preview2-1-003177.tar.gz
-      # unarchive:
-        # src: http://download.microsoft.com/download/A/F/6/AF610E6A-1D2D-47D8-80B8-F178951A0C72/Binaries/dotnet-dev-centos-x64.1.0.0-preview2-1-003177.tar.gz
-        # dest: /opt/dotnet
-        # copy: no
-    
-    # - name: Create symbolic link if it does not exist - ln -s /opt/dotnet/dotnet /usr/local/bin/dotnet
-      # file:
-        # src: /opt/dotnet/dotnet
-        # dest: /usr/local/bin/dotnet
-        # state: link
+               
+    - name: creating user davidw and adding to groups
+      user:
+        name: davidw
+        shell: /bin/bash
+        groups: pi,adm,dialout,cdrom,sudo,audio,video,plugdev,games,users,input,netdev,spi,i2c,gpio
+        append: yes
+        
+    # - name: Remove default 'pi' user   
+      # user:
+        # name: pi
+        # state: absent
+        # remove: yes
+            
   roles:
     - role: xdrum.rsyslog
       rsyslog_default_config: "False"
