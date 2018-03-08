@@ -29,41 +29,16 @@
   timezone:
     name: Europe/London
     
-  # https://stackoverflow.com/questions/32087617/error-apt-is-not-a-legal-parameter-of-an-ansible-play/32162351
-  - name: Install the package "libunwind8"
-    apt:
-      name: libunwind8
-      state: present
-  
-  - name: Install the package "libunwind8-dev"
-    apt:
-      name: libunwind8-dev 
-      state: present
-  
-  - name: Install the package "gettext"
-    apt:
-      name: gettext
-      state: present
-  
-  - name: Install the package "libicu-dev"
-    apt:
-      name: libicu-dev
-      state: present
-  
-  - name: Install the package "liblttng-ust-dev "
-    apt:
-      name: liblttng-ust-dev
-      state: present
-  
-  - name: Install the package "libcurl4-openssl-dev"
-    apt:
-      name: libcurl4-openssl-dev
-      state: present
-  
-  - name: Install the package "uuid-dev"
-    apt:
-      name: uuid-dev
-      state: present   
+  - name: install pre-req packages
+    apt: name={{item}} state=latest update_cache=yes
+    with_items:
+    - libunwind8
+    - libunwind8-dev
+    - gettext    
+    - libicu-dev
+    - liblttng-ust-dev
+    - libcurl4-openssl-dev
+    - uuid-dev 
    
   - name: Get dotnet core
     unarchive:
