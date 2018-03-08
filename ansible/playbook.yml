@@ -100,5 +100,6 @@
         # state: link
   roles:
     - role: xdrum.rsyslog
+      rsyslog_default_config: "False"
       rsyslog_server_udp_port: 514
       rsyslog_server_udp_address: 192.168.0.67
