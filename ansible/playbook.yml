@@ -104,4 +104,4 @@
       items:
         - name: "20-graylog"
           lines: 
-            - '*.*    192.168.0.67:514'
+            - '*.* @192.168.0.67:514;RSYSLOG_SyslogProtocol23Format'
