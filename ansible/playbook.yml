@@ -3,74 +3,73 @@
 - hosts: all
   sudo: yes
   tasks:
-  
-  - name: "update and upgrade apt packages"
-    become: true
-    apt:
-      upgrade: yes
-      update_cache: yes
-      # cache_valid_time: 86400 #One day
-  
-  - name: restart server
-    shell: 'sleep 1 && shutdown -r now "Reboot triggered by Ansible" && sleep 1'
-    async: 1
-    poll: 0
-    become: true
-  
-  - name: Wait for server to restart
-    local_action:
-      module: wait_for
-        host={{ inventory_hostname }}
-        port=22
-        delay=10
-      become: false
-      
-  - name: set timezone to Asia/Tokyo
-  timezone:
-    name: Europe/London
-
-  - name: install pre-req packages
-    apt: name={{item}} state=latest update_cache=yes
-    with_items:
-    - libunwind8
-    - libunwind8-dev
-    - gettext    
-    - libicu-dev
-    - liblttng-ust-dev
-    - libcurl4-openssl-dev
-    - uuid-dev 
-   
-  - name: Get dotnet core
-    unarchive:
-      src: https://github.com/dotnet/core-setup/files/716356/dotnet-ubuntu.16.04-arm.1.2.0-beta-001291-00.tar.gz
-      dest: ~/dotnet
-      creates: ~/dotnet
-      remote_src: yes
-      
-  # export PATH=$PATH:$HOME/dotnet    
-      
-  - name: Get Powershell 6 core
-    unarchive:
-      src: https://github.com/PowerShell/PowerShell/releases/download/v6.0.1/powershell-6.0.1-linux-arm32.tar.gz
-      dest: ~/powershell
-      creates: ~/powershell
-      remote_src: yes
-      
-  # - name: Create directory /opt/dotnet if it does not exist
-    # file:
-      # path: /opt/dotnet
-      # state: directory
-      # mode: 0755
-  
-  # - name: Download and extract dotnet-dev-centos-x64.1.0.0-preview2-1-003177.tar.gz
-    # unarchive:
-      # src: http://download.microsoft.com/download/A/F/6/AF610E6A-1D2D-47D8-80B8-F178951A0C72/Binaries/dotnet-dev-centos-x64.1.0.0-preview2-1-003177.tar.gz
-      # dest: /opt/dotnet
-      # copy: no
-  
-  # - name: Create symbolic link if it does not exist - ln -s /opt/dotnet/dotnet /usr/local/bin/dotnet
-    # file:
-      # src: /opt/dotnet/dotnet
-      # dest: /usr/local/bin/dotnet
-      # state: link
-  
+    - name: "update and upgrade apt packages"
+      become: true
+      apt:
+        upgrade: yes
+        update_cache: yes
+        # cache_valid_time: 86400 #One day
+    
+    - name: restart server
+      shell: 'sleep 1 && shutdown -r now "Reboot triggered by Ansible" && sleep 1'
+      async: 1
+      poll: 0
+      become: true
+    
+    - name: Wait for server to restart
+      local_action:
+        module: wait_for
+          host={{ inventory_hostname }}
+          port=22
+          delay=10
+        become: false
+        
+    - name: set timezone to Asia/Tokyo
+      timezone:
+        name: Europe/London
+    
+    - name: install pre-req packages
+      apt: name={{item}} state=latest update_cache=yes
+      with_items:
+      - libunwind8
+      - libunwind8-dev
+      - gettext    
+      - libicu-dev
+      - liblttng-ust-dev
+      - libcurl4-openssl-dev
+      - uuid-dev 
+     
+    - name: Get dotnet core
+      unarchive:
+        src: https://github.com/dotnet/core-setup/files/716356/dotnet-ubuntu.16.04-arm.1.2.0-beta-001291-00.tar.gz
+        dest: ~/dotnet
+        creates: ~/dotnet
+        remote_src: yes
+        
+    # export PATH=$PATH:$HOME/dotnet    
+        
+    - name: Get Powershell 6 core
+      unarchive:
+        src: https://github.com/PowerShell/PowerShell/releases/download/v6.0.1/powershell-6.0.1-linux-arm32.tar.gz
+        dest: ~/powershell
+        creates: ~/powershell
+        remote_src: yes
+        
+    # - name: Create directory /opt/dotnet if it does not exist
+      # file:
+        # path: /opt/dotnet
+        # state: directory
+        # mode: 0755
+    
+    # - name: Download and extract dotnet-dev-centos-x64.1.0.0-preview2-1-003177.tar.gz
+      # unarchive:
+        # src: http://download.microsoft.com/download/A/F/6/AF610E6A-1D2D-47D8-80B8-F178951A0C72/Binaries/dotnet-dev-centos-x64.1.0.0-preview2-1-003177.tar.gz
+        # dest: /opt/dotnet
+        # copy: no
+    
+    # - name: Create symbolic link if it does not exist - ln -s /opt/dotnet/dotnet /usr/local/bin/dotnet
+      # file:
+        # src: /opt/dotnet/dotnet
+        # dest: /usr/local/bin/dotnet
+        # state: link
+    
