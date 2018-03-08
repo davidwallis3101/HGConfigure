@@ -31,8 +31,6 @@
       apt: 
         name: fail2ban
         state: present
-        
-        sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
 
     - name: copy fail2ban configuration
       copy:
