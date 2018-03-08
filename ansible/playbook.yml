@@ -16,12 +16,12 @@
       become: true
     
     - name: Wait for server to restart
+      become: false
       local_action:
         module: wait_for
           host={{ inventory_hostname }}
           port=22
           delay=10
-        become: false
         
     - name: set timezone to Asia/Tokyo
       timezone:
