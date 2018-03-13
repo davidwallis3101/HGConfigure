@@ -53,16 +53,22 @@
         name: dirmngr
         state: present
     
-    # - name: Add an apt key by id from a keyserver
-    #   apt_key:
-    #     keyserver: keyserver.ubuntu.com
-    #     id: 36A1D7869245C8950F966E92D8576A8BA88D21E9
+    - name: Add an apt key by id from a keyserver
+      apt_key:
+        keyserver: keyserver.ubuntu.com
+        id: 36A1D7869245C8950F966E92D8576A8BA88D21E9
     
     # - name: Add mono 5.4.1.6 repo
     #   apt_repository:
     #     repo: deb http://download.mono-project.com/repo/debian raspbianstretch/snapshots/5.4.1.6 main
     #     state: present
     #     filename: 'mono-official.list'
+
+    - name: Add mono repo # The latest Stable Mono release is: 5.10.0 Stable (5.10.0.160) 13/03/2018
+    apt_repository:
+      repo: deb http://download.mono-project.com/repo/debian raspbianstretch/snapshots/5.10.0.160 main
+      state: present
+      filename: 'mono-official.list'
 
     - name: Update repositories cache and install "mono-complete" package
       apt:
