@@ -64,11 +64,11 @@
     #     state: present
     #     filename: 'mono-official.list'
 
-    - name: Add mono repo # The latest Stable Mono release is: 5.10.0 Stable (5.10.0.160) 13/03/2018
+    - name: Add mono repo
       apt_repository:
-        repo: deb http://download.mono-project.com/repo/debian raspbianstretch/snapshots/5.10.0.160 main
+        repo: deb http://download.mono-project.com/repo/debian stable-raspbianstretch main
         state: present
-        filename: 'mono-official.list'
+        filename: 'mono-official'
 
     - name: Update repositories cache and install "mono-complete" package
       apt:
