@@ -53,10 +53,15 @@
         name: dirmngr
         state: present
     
+    # - name: Add an apt key by id from a keyserver
+    #   apt_key:
+    #     keyserver: keyserver.ubuntu.com
+    #     id: 36A1D7869245C8950F966E92D8576A8BA88D21E9
+
     - name: Add an apt key by id from a keyserver
       apt_key:
         keyserver: keyserver.ubuntu.com
-        id: 36A1D7869245C8950F966E92D8576A8BA88D21E9
+        id: 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
     
     # - name: Add mono 5.4.1.6 repo
     #   apt_repository:
