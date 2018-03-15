@@ -131,7 +131,14 @@
         # name: pi
         # state: absent
         # remove: yes
-            
+
+    - name: Get Homegenie
+      unarchive:
+        src: https://github.com/Bounz/HomeGenie-BE/releases/download/V1.1.16.3/HGBE_V1.1.16.3.zip
+        dest: /usr/local/bin/homegenie
+        creates: /usr/local/bin/homegenie
+        remote_src: yes
+
   # roles:
   #   - role: xdrum.rsyslog
   #     rsyslog_default_config: "False"
