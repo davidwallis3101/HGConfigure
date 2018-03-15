@@ -147,7 +147,7 @@
 
     - name: create systemd file
       copy:
-        dest:  /etc/systemd/system/homegenie.service
+        dest: /etc/systemd/system/homegenie.service
         content: |
           [Unit]
           Description=HomeGenie Automation Server
