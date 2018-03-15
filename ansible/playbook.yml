@@ -149,19 +149,8 @@
       copy:
         dest: /etc/systemd/system/homegenie.service
         content: |
-          [Unit]
-          Description=HomeGenie Automation Server
-          After=network.target
-
-          [Service]
-          WorkingDirectory=/usr/local/bin/homegenie
-          ExecStart=/usr/bin/mono /usr/local/bin/homegenie/HomeGenie.exe --log
-          ExecStop=/usr/local/bin/homegenie/homegenie/homegenie_stop.sh
-          Restart=always
-          TimeoutStopSec=90
-
-          [Install]
-          WantedBy=multi-user.target
+          Line 1
+          Line 2
         backup: yes
         run_once: yes
 
