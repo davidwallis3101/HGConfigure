@@ -8,7 +8,7 @@
         upgrade: yes
         update_cache: yes
         cache_valid_time: 86400 #One day
-    
+
     - name: Configure gpu memory options in /boot/config.txt
       lineinfile:
         dest: /boot/config.txt
@@ -17,27 +17,27 @@
         insertafter: EOF
         state: present
         # TODO add notify and handler to reboot?
-    
+
     - name: restart server if required
       shell: 'sleep 2 && shutdown -r now "Reboot triggered by Ansible" removes=/var/run/reboot-required'
       async: 1
       poll: 0
       become: true
-    
+
     - name: Wait for server to restart
       become: false
       local_action:
         module: wait_for
           host={{ inventory_hostname }}
           port=22
-          delay=10  
-               
+          delay=10
+
     - name: set timezone to Europe/London
       timezone:
         name: Europe/London
-    
+
     - name: install fail2ban package
-      apt: 
+      apt:
         name: fail2ban
         state: present
 
@@ -47,12 +47,12 @@
         src: /etc/fail2ban/jail.conf
         dest: /etc/fail2ban/jail.local
         remote_src: yes
-   
+
     - name: Install the package "dirmngr"
       apt:
         name: dirmngr
         state: present
-    
+
     # - name: Add an apt key by id from a keyserver
     #   apt_key:
     #     keyserver: keyserver.ubuntu.com
@@ -62,7 +62,7 @@
       apt_key:
         keyserver: keyserver.ubuntu.com
         id: 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
-    
+
     # - name: Add mono 5.4.1.6 repo
     #   apt_repository:
     #     repo: deb http://download.mono-project.com/repo/debian raspbianstretch/snapshots/5.4.1.6 main
@@ -78,65 +78,66 @@
     - name: Update repositories cache and install "mono-complete" package
       apt:
         name: mono-complete
-        update_cache: yes 
-        
+        update_cache: yes
+
     - name: install dot net core / powershell pre-req packages
       apt: name={{item}} state=latest update_cache=yes
       with_items:
       - libunwind8
       - libunwind8-dev
-      - gettext    
+      - gettext
       - libicu-dev
       - liblttng-ust-dev
       - libcurl4-openssl-dev
-      - uuid-dev 
-      
+      - uuid-dev
+
     - name: Create dotnet directory if it does not exist
       file:
         path: /home/pi/dotnet
         state: directory
-        mode: 0755    
-        
+        mode: 0755
+
     - name: Get dotnet core
       unarchive:
         src: https://github.com/dotnet/core-setup/files/716356/dotnet-ubuntu.16.04-arm.1.2.0-beta-001291-00.tar.gz
         dest: /home/pi/dotnet
         creates: /home/pi/dotnet
         remote_src: yes
-        
-    # export PATH=$PATH:$HOME/dotnet    
-    
+
+    # export PATH=$PATH:$HOME/dotnet
+
     - name: Create powershell directory if it does not exist
       file:
         path: /home/pi/powershell
         state: directory
-        mode: 0755   
-    
+        mode: 0755
+
     - name: Get Powershell 6 core
       unarchive:
         src: https://github.com/PowerShell/PowerShell/releases/download/v6.0.1/powershell-6.0.1-linux-arm32.tar.gz
         dest: /home/pi/powershell
         creates: /home/pi/powershell
         remote_src: yes
-               
+
     - name: creating user davidw and adding to groups
       user:
         name: davidw
         shell: /bin/bash
         groups: pi,adm,dialout,cdrom,sudo,audio,video,plugdev,games,users,input,netdev,spi,i2c,gpio
         append: yes
-        
-    # - name: Remove default 'pi' user   
+
+    # - name: Remove default 'pi' user
       # user:
         # name: pi
         # state: absent
         # remove: yes
+
     - name: Create homegenie directory if it does not exist
       file:
         path: /usr/local/bin/homegenie
         state: directory
-        mode: 0755   
-        
+        mode: 0755
+
     - name: Get Homegenie
       unarchive:
         src: https://github.com/Bounz/HomeGenie-BE/releases/download/V1.1.16.3/HGBE_V1.1.16.3.zip
@@ -145,23 +146,23 @@
         remote_src: yes
 
     - copy:
-        content: |
-          [Unit]
-          Description=HomeGenie Automation Server
-          After=network.target
+      content: |
+        [Unit]
+        Description=HomeGenie Automation Server
+        After=network.target
 
-          [Service]
-          WorkingDirectory=/usr/local/bin/homegenie
-          ExecStart=/usr/bin/mono /usr/local/bin/homegenie/HomeGenie.exe --log
-          ExecStop=/usr/local/bin/homegenie/homegenie/homegenie_stop.sh
-          Restart=always
-          TimeoutStopSec=90
+        [Service]
+        WorkingDirectory=/usr/local/bin/homegenie
+        ExecStart=/usr/bin/mono /usr/local/bin/homegenie/HomeGenie.exe --log
+        ExecStop=/usr/local/bin/homegenie/homegenie/homegenie_stop.sh
+        Restart=always
+        TimeoutStopSec=90
 
-          [Install]
-          WantedBy=multi-user.target
-        dest:  /etc/systemd/system/homegenie.service
-        backup: yes
-        run_once: yes
+        [Install]
+        WantedBy=multi-user.target
+      dest:  /etc/systemd/system/homegenie.service
+      backup: yes
+      run_once: yes
 
     - name: Enable service homegenie
       systemd:
@@ -179,5 +180,5 @@
   #     rsyslog_default_config: "False"
   #     items:
   #       - name: "20-graylog"
-  #         lines: 
+  #         lines:
   #           - '*.* @192.168.0.67:514;RSYSLOG_SyslogProtocol23Format'
