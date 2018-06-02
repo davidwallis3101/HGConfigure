@@ -16,7 +16,7 @@
 #>
 [cmdletbinding()]
 Param(
-    [String]$Server = "http://127.0.0.1:80"
+    [String]$Server = "http://192.168.0.161:80"
 )
 
 function Invoke-MultipartFormDataUpload {
@@ -118,9 +118,12 @@ function Invoke-MultipartFormDataUpload {
 }
 
 
+$interfacesFolder = Join-Path $PSScriptRoot "Interfaces"
+
+
 ########################## Programs ##########################
 
-# Disable Programs
+# Disable All Programs
 $programs = invoke-restMethod `
     -uri ($Server + "/api/HomeAutomation.HomeGenie/Automation/Programs.List/") `
     -verbose:$false
@@ -132,6 +135,124 @@ foreach ($program in ($programs|Where-Object {$_.IsEnabled -eq $true})) {
         -verbose:$false
 }
 
+########################## Programs ##########################
+# Delete programs
+$programsToDelete = @(
+    @{Name = "Group Lights ON"; Address = 6},
+    @{Name = "Group Lights OFF"; Address = 7},
+    @{Name = "Sunrise Colors Scenario"; Address = 8},
+    @{Name = "Level Memory"; Address = 16},
+    @{Name = "Philips Hue Bridge"; Address = 26},
+    # @{Name = "Zone Sensors"; Address = 29},
+    #@{Name = "Weather Underground"; Address = 34},
+    @{Name = "Level Poll"; Address = 39},
+    @{Name = "Meter Watt Poll"; Address = 40},
+    @{Name = "IR/RF remote control events forwarding"; Address = 73},
+    @{Name = "Meter.Watts events forwarding"; Address = 74},
+    @{Name = "Status.Level events forwarding"; Address = 75},
+    @{Name = "Sensor.* events forwarding"; Address = 76},
+    @{Name = "MQTT Network"; Address = 77},
+    @{Name = "Basic Thermostat"; Address = 78},
+    @{Name = "Energy Monitor"; Address = 81},
+    @{Name = "Energy Saving Mode"; Address = 82},
+    @{Name = "Set to 100% when switched on"; Address = 84},
+    @{Name = "Generic IP Camera"; Address = 88},
+    @{Name = "Security Alarm System"; Address = 90},
+    @{Name = "Query on Wake Up"; Address = 91},
+    @{Name = "Z-Wave Thermostat Poll"; Address = 92},
+    #@{Name = "Multi Instance/Channel  Virtual Modules"; Address = 93},
+    @{Name = "Turn Off Delay"; Address = 112},
+    @{Name = "X10 RF Virtual Modules Mapper"; Address = 121},
+    @{Name = "E-Mail Account"; Address = 142},
+    @{Name = "Favourites Links"; Address = 180},
+    @{Name = "Windows Phone Push Notification Service"; Address = 200},
+    @{Name = "Virtual Modules Demo"; Address = 400},
+    @{Name = "Demo - Toggle Door"; Address = 401},
+    @{Name = "Demo - Motion Detected"; Address = 402},
+    @{Name = "Demo - Simulate Temperature"; Address = 403},
+    @{Name = "Demo - Simulate Luminance"; Address = 404},
+    @{Name = "IR Remote Controller"; Address = 505}
+)
+
+foreach ($program in $programsToDelete) {
+    write-verbose ("Deleting program: {0} Address: {1}" -f $program.Name, $program.Address)
+     $null = invoke-restMethod `
+         -uri ($Server + "/api/HomeAutomation.HomeGenie/Automation/Programs.Delete/$($program.Address)") `
+         -verbose:$false
+}
+
+# Getting Programs
+$programs = invoke-restMethod `
+    -uri ($Server + "/api/HomeAutomation.HomeGenie/Automation/Programs.List/") `
+    -verbose:$false
+
+# Get Automation Groups
+$automationGroups = invoke-restMethod `
+    -uri ($Server + "/api/HomeAutomation.HomeGenie/Config/Groups.List/Automation/") `
+    -verbose:$false
+
+foreach ($automationGroup in $automationGroups) {
+  $programsInAutomationGroup = $programs | Where-Object {$_.Group -eq $automationGroup.Name}
+
+  if ($programsInAutomationGroup.Count -eq 0) {
+      write-verbose ("Removing automation group {0} as it has no programs" -f $automationGroup.Name)
+      $null = invoke-restMethod `
+          -uri ($Server + "/api/HomeAutomation.HomeGenie/Config/Groups.Delete/Automation/") `
+          -ContentType 'application/x-www-form-urlencoded' `
+          -Body $automationGroup.Name `
+          -Method Post `
+          -Verbose:$false
+  }
+}
+
+########################## Groups ##########################
+# Get groups
+$groups = invoke-restMethod `
+    -uri ($Server + "/api/HomeAutomation.HomeGenie/Config/Groups.List/Control/") `
+    -verbose:$false
+
+write-verbose "Deleting groups with no modules"
+foreach ($group in $groups) {
+  if ($group.Modules.Count -eq 0) {
+      write-verbose ("Deleting group: [{0}]" -f $group.Name)
+      $null = invoke-restMethod `
+          -uri ($Server + "/api/HomeAutomation.HomeGenie/Config/Groups.Delete/Control/") `
+          -ContentType 'application/x-www-form-urlencoded' `
+          -Body $group.Name `
+          -Method Post `
+          -verbose:$false
+  }
+}
+
+# Delete Color lights group
+write-verbose "Deleting color lights group"
+$null = invoke-restMethod `
+    -uri ($Server + "/api/HomeAutomation.HomeGenie/Config/Groups.Delete/Control/") `
+    -ContentType 'application/x-www-form-urlencoded' `
+    -Body "Color Lights" `
+    -Method Post `
+    -verbose:$false
+
+
+##########################  Disable Un-Needed Interfaces ##########################
+$interfacesToDisable = @(
+    @{Domain = "Protocols.UPnP"},
+    @{Domain = "HomeAutomation.ZWave"},
+    @{Domain = "HomeAutomation.X10"}
+)
+
+# # Get Interfaces
+# $interfaces = invoke-restMethod `
+#     -uri ($Server + "/api/HomeAutomation.HomeGenie/Config/Interfaces.ListConfig/") `
+#     -verbose:$false
+
+foreach ($interface in $interfacesToDisable) {
+    write-verbose ("Disabling interface: {0}" -f $interface.Domain)
+    $null = invoke-restMethod `
+         -uri ($Server + "/api/MIGService.Interfaces/$($interface.Domain)/IsEnabled.Set/0/") `
+         -verbose:$false
+}
+
 ########################## Set Location ##########################
 
 $locationData = @{
@@ -140,7 +261,7 @@ $locationData = @{
     'longitude' = -1.5497609000000239;
 }
 
-write-verbose "setting location"
+write-verbose "Setting location"
 invoke-restMethod `
     -uri ($Server + "/api/HomeAutomation.HomeGenie/Config/System.Configure/Location.Set/") `
     -body (convertto-json $locationData -compress) `
@@ -150,59 +271,6 @@ invoke-restMethod `
 # Get Location
 write-verbose "get location"
 invoke-restMethod -uri ($Server + "/api/HomeAutomation.HomeGenie/Config/System.Configure/Location.Get/") -verbose:$false
-
-########################## Interfaces ##########################
-
-# Only gets enabled interfaces:
-#$interfaces = invoke-restMethod -uri ($Server + "/api/HomeAutomation.HomeGenie/Config/Interfaces.List/")
-
-# Get Interfaces
-$interfaces = invoke-restMethod `
-    -uri ($Server + "/api/HomeAutomation.HomeGenie/Config/Interfaces.ListConfig/") `
-    -verbose:$false
-
-foreach ($interface in ($interfaces|Where-Object {$_.IsEnabled -eq $true})) {
-    write-verbose ("Disabling interface: {0}" -f $interface.Domain)
-    $null = invoke-restMethod `
-         -uri ($Server + "/api/MIGService.Interfaces/$($interface.Domain)/IsEnabled.Set/0/") `
-         -verbose:$false
-}
-
-
-########################## Install Interface ##########################
-
-
-# Install Interfaces (Config.cs for this info)
-# (If no args provided then it will use mig_interface_import.zip)
-# or download interface:
-$interfaceFileName = "C:\Users\Davidw\Source\repos\TexecomInterface\MIG-Interface\Output\MIG-TexecomInterface.zip"
-#$interfaceFileName = "c:\users\davidw\desktop\MIG-Echobridge.zip"
-
-write-verbose ("Uploading Interface: {0}" -f $interfaceFileName)
-
-$resp = Invoke-MultipartFormDataUpload `
-    -InFile $interfaceFileName `
-    -uri ("$Server/api/HomeAutomation.HomeGenie/Config/Interface.Import/") `
-    -contentType "application/form-data" `
-    -Verbose
-
-$msg = $resp |ConvertFrom-Json
-
-# There is a bug in that the wrong markdown is returned when uploading an interface
-Write-verbose ("`n*******************************`n" + $msg.ResponseValue + "`n*******************************")
-
-write-verbose "Installing uploaded interface"
-# TODO check response value
-$null = (invoke-restMethod `
-    -uri ($Server + "/api/HomeAutomation.HomeGenie/Config/Interface.Install") `
-    <# -contentType "application/x-zip-compressed" #> `
-    -verbose:$false)
-
-# write-verbose "installing interface using download"
-# Add-Type -AssemblyName System.Web
-# $interfaceDownloadUrl = [System.Web.HttpUtility]::UrlEncode("https://github.com/davidwallis3101/HomegenieEchoBridge/blob/master/MIG-EchoBridge.zip")
-# invoke-restMethod -uri ($Server + "/api/HomeAutomation.HomeGenie/Config/System.Configure/Interface.Import/$interfaceDownloadUrl")
-
 
 ########################## Get Schedules ##########################
 write-verbose "Getting schedules"
@@ -217,6 +285,38 @@ foreach ($schedule in ($schedules| Where-Object {$_.IsEnabled -eq $true})) {
         -uri ($Server + "/api/HomeAutomation.HomeGenie/Automation/Scheduling.Disable/$($schedule.Name)")`
         -verbose:$false
 }
+
+########################## Install Interfaces ##########################
+
+
+foreach ($interface in (Get-ChildItem -path $interfacesFolder -Filter *.zip))
+{
+    write-verbose ("Uploading Interface: {0}" -f  $interface.fullname)
+
+    $resp = Invoke-MultipartFormDataUpload `
+        -InFile  $interface.fullname `
+        -uri ("$Server/api/HomeAutomation.HomeGenie/Config/Interface.Import/") `
+        -contentType "application/form-data" `
+        -Verbose
+
+    $msg = $resp | ConvertFrom-Json
+
+    # There is a bug in that the wrong markdown is returned when uploading an interface
+    Write-verbose ("`n*******************************`n" + $msg.ResponseValue + "`n*******************************")
+
+    write-verbose "Installing uploaded interface"
+    $null = (invoke-restMethod `
+        -uri ($Server + "/api/HomeAutomation.HomeGenie/Config/Interface.Install") `
+        -verbose:$false)
+
+    #Might not be needed, but do it anyway..
+    start-sleep -seconds 2
+}
+
+# write-verbose "installing interface using download"
+# Add-Type -AssemblyName System.Web
+# $interfaceDownloadUrl = [System.Web.HttpUtility]::UrlEncode("https://github.com/davidwallis3101/HomegenieEchoBridge/blob/master/MIG-EchoBridge.zip")
+# invoke-restMethod -uri ($Server + "/api/HomeAutomation.HomeGenie/Config/System.Configure/Interface.Import/$interfaceDownloadUrl")
 
 
 ########################## Restart ##########################
