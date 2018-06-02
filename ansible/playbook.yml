@@ -39,7 +39,7 @@
     - name: Ensure the hostname is set correctly
       become: yes
       hostname:
-        name: "{{ understairs }}"
+        name: understairs
 
     - name: install fail2ban package
       apt:
