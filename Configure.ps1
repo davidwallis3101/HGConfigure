@@ -9,14 +9,14 @@
     The hg server url
 
 .EXAMPLE
-    PS C:\> Configure.ps1 -Server "Http://10.1.1.1:80"
+    PS C:\> Configure.ps1 -Server "http://127.0.0.1:80"
 
 .LINK
     https://github.com/davidwallis3101/HGConfigure
 #>
 [cmdletbinding()]
 Param(
-    [String]$Server = "http://10.4.1.4:80"
+    [String]$Server = "http://127.0.0.1:80"
 )
 
 function Invoke-MultipartFormDataUpload {
@@ -175,14 +175,14 @@ foreach ($interface in ($interfaces|Where-Object {$_.IsEnabled -eq $true})) {
 # Install Interfaces (Config.cs for this info)
 # (If no args provided then it will use mig_interface_import.zip)
 # or download interface:
-
-$interfaceFileName = "c:\users\davidw\desktop\MIG-Echobridge.zip"
+$interfaceFileName = "C:\Users\Davidw\Source\repos\TexecomInterface\MIG-Interface\Output\MIG-TexecomInterface.zip"
+#$interfaceFileName = "c:\users\davidw\desktop\MIG-Echobridge.zip"
 
 write-verbose ("Uploading Interface: {0}" -f $interfaceFileName)
 
 $resp = Invoke-MultipartFormDataUpload `
     -InFile $interfaceFileName `
-    -uri ("$ServerAddress/api/HomeAutomation.HomeGenie/Config/Interface.Import/") `
+    -uri ("$Server/api/HomeAutomation.HomeGenie/Config/Interface.Import/") `
     -contentType "application/form-data" `
     -Verbose
 

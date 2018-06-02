@@ -17,12 +17,12 @@
 
 [cmdletbinding()]
 Param(
-    [String]$ServerIp = "192.168.0.161",
+    [String]$ServerIp = "192.168.0.81",
     [int]$port = 80,
     [string] $proto = "http"
 )
 
-clear-host 
+clear-host
 
 $ServerAddress = ("{0}://{1}:{2}" -f $proto, $ServerIp, $port)
 

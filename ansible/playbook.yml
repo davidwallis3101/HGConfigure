@@ -145,7 +145,7 @@
         creates: /usr/local/bin/homegenie/Homegenie.exe
         remote_src: yes
 
-    - name: create systemd file
+    - name: Create systemd file
       copy:
         dest: /etc/systemd/system/homegenie.service
         content: |
@@ -174,10 +174,10 @@
         state=started
         name=homegenie
 
-  # roles:
-  #   - role: xdrum.rsyslog
-  #     rsyslog_default_config: "False"
-  #     items:
-  #       - name: "20-graylog"
-  #         lines:
-  #           - '*.* @192.168.0.67:514;RSYSLOG_SyslogProtocol23Format'
+    roles:
+      - role: xdrum.rsyslog
+        rsyslog_default_config: "false"
+        items:
+          - name: "20-graylog"
+            lines:
+              - '*.* @graylog:514;RSYSLOG_SyslogProtocol23Format'
