@@ -188,7 +188,7 @@
         path: /etc/ssh/sshd_config
         regexp: '^#?PasswordAuthentication'
         line: 'PasswordAuthentication no'
-      notify: restart ssh
+      # notify: restart ssh
 
     - name: Add sudoers entry to allow admin user passwordless sudo
       copy:
