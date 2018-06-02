@@ -181,10 +181,10 @@
         state=started
         name=homegenie
 
-    roles:
-      - role: xdrum.rsyslog
-        rsyslog_default_config: "false"
-        items:
-          - name: "20-graylog"
-            lines:
-              - '*.* @graylog:514;RSYSLOG_SyslogProtocol23Format'
+  roles:
+    - role: xdrum.rsyslog
+      rsyslog_default_config: "false"
+      items:
+        - name: "20-graylog"
+          lines:
+            - '*.* @graylog:514;RSYSLOG_SyslogProtocol23Format'
