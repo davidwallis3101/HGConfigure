@@ -192,8 +192,8 @@
 
     - name: Add sudoers entry to allow admin user passwordless sudo
       copy:
-        content: "{{ admin_user }} ALL=(ALL) NOPASSWD: ALL"
-        dest: "/etc/sudoers.d/020_{{ admin_user }}-nopasswd"
+        content: "davidw ALL=(ALL) NOPASSWD: ALL"
+        dest: "/etc/sudoers.d/020_davidw-nopasswd"
         mode: 0440
 
   # roles:
