@@ -36,6 +36,11 @@
       timezone:
         name: Europe/London
 
+    - name: Ensure the hostname is set correctly
+      become: yes
+      hostname:
+        name: "{{ understairs }}"
+
     - name: install fail2ban package
       apt:
         name: fail2ban
@@ -52,11 +57,6 @@
       apt:
         name: dirmngr
         state: present
-
-    # - name: Add an apt key by id from a keyserver
-    #   apt_key:
-    #     keyserver: keyserver.ubuntu.com
-    #     id: 36A1D7869245C8950F966E92D8576A8BA88D21E9
 
     - name: Add an apt key by id from a keyserver
       apt_key:
@@ -126,7 +126,14 @@
         groups: pi,adm,dialout,cdrom,sudo,audio,video,plugdev,games,users,input,netdev,spi,i2c,gpio
         append: yes
 
+    - name: Set authorized key for user
+      authorized_key:
+        user: davidw
+        state: present
+        key: https://github.com/davidwallis3101.keys
+
     # - name: Remove default 'pi' user
+    #   become: yes
       # user:
         # name: pi
         # state: absent
@@ -140,7 +147,7 @@
 
     - name: Get Homegenie
       unarchive:
-        src: https://github.com/Bounz/HomeGenie-BE/releases/download/V1.1.16.3/HGBE_V1.1.16.3.zip
+        src: https://github.com/Bounz/HomeGenie-BE/releases/download/V1.1.16.5/HGBE_V1.1.16.5.zip
         dest: /usr/local/bin/homegenie
         creates: /usr/local/bin/homegenie/Homegenie.exe
         remote_src: yes
