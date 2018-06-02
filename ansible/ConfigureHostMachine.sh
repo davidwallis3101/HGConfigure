@@ -16,10 +16,14 @@ cd HGConfigure/ansible/
 
 ansible-galaxy install -p ./roles -r roles.yml
 
+# update if needed
+git pull origin master
+
 #ansible-playbook playbook.yml -i 192.168.0.81, --ask-pass --become -c paramiko
 
-ansible-playbook playbook.yml -i 192.168.0.81, --ask-pass --become -u pi -c paramiko 
-ansible-playbook playbook.yml -i hosts --ask-pass --become -u pi -c paramiko 
+ansible-playbook playbook.yml -i 192.168.0.81, --ask-pass --become -u pi -c paramiko
+ansible-playbook playbook.yml -i 192.168.0.161, --ask-pass --become -u pi -c paramiko
+# ansible-playbook playbook.yml -i hosts --ask-pass --become -u pi -c paramiko
 
 ## Diferent sudo password
 #ansible-playbook playbook.yml -i 192.168.0.81, --ask-pass --become -c paramiko --ask-become-pass

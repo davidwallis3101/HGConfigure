@@ -133,12 +133,12 @@
         state: present
         key: https://github.com/davidwallis3101.keys
 
-    - name: Remove default 'pi' user
-      become: yes
-      user:
-        name: pi
-        state: absent
-        remove: yes
+    # - name: Remove default 'pi' user
+    #   become: yes
+    #   user:
+    #     name: pi
+    #     state: absent
+    #     remove: yes
 
     - name: Create homegenie directory if it does not exist
       file:
