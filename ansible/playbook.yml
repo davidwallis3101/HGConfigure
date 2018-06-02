@@ -7,7 +7,7 @@
       apt:
         upgrade: yes
         update_cache: yes
-        cache_valid_time: 86400 #One day
+        # cache_valid_time: 86400 #One day
 
     - name: Configure gpu memory options in /boot/config.txt
       lineinfile:
@@ -44,6 +44,7 @@
     - name: install fail2ban package
       apt:
         name: fail2ban
+        update_cache: yes
         state: present
 
     - name: copy fail2ban configuration
@@ -126,18 +127,18 @@
         groups: pi,adm,dialout,cdrom,sudo,audio,video,plugdev,games,users,input,netdev,spi,i2c,gpio
         append: yes
 
-    - name: Set authorized key for user
+    - name: Set authorized key for user davidw
       authorized_key:
         user: davidw
         state: present
         key: https://github.com/davidwallis3101.keys
 
-    # - name: Remove default 'pi' user
-    #   become: yes
-      # user:
-        # name: pi
-        # state: absent
-        # remove: yes
+    - name: Remove default 'pi' user
+      become: yes
+      user:
+        name: pi
+        state: absent
+        remove: yes
 
     - name: Create homegenie directory if it does not exist
       file:
