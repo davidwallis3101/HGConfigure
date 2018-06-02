@@ -182,6 +182,14 @@
         state=started
         name=homegenie
 
+    - name: Disable SSH Password logins
+      become: yes
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PasswordAuthentication'
+        line: 'PasswordAuthentication no'
+      notify: restart ssh
+
   # roles:
   #   - role: xdrum.rsyslog
   #     rsyslog_default_config: "false"
