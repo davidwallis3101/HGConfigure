@@ -148,7 +148,8 @@
 
     - name: Get Homegenie
       unarchive:
-        src: https://github.com/Bounz/HomeGenie-BE/releases/download/V1.1.16.5/HGBE_V1.1.16.5.zip
+        src: https://github.com/Bounz/HomeGenie-BE/releases/download/V1.1.16.3/HGBE_V1.1.16.3.zip
+        #src: https://github.com/Bounz/HomeGenie-BE/releases/download/V1.1.16.5/HGBE_V1.1.16.5.zip
         dest: /usr/local/bin/homegenie
         creates: /usr/local/bin/homegenie/Homegenie.exe
         remote_src: yes
