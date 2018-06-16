@@ -5,8 +5,11 @@
 .DESCRIPTION
     Long description
 
-.PARAMETER Server
-    The hg server url
+.PARAMETER IpAddress
+    The hg server ip
+
+.PARAMETER Port
+    The hg server port
 
 .EXAMPLE
     PS C:\> Configure.ps1 -Server "http://127.0.0.1:80"
@@ -16,7 +19,9 @@
 #>
 [cmdletbinding()]
 Param(
-    [String]$Server = "http://192.168.0.161:80"
+    [String]$IpAddress = "192.168.0.161",
+
+    [String]$Port = "80"
 )
 
 function Invoke-MultipartFormDataUpload {
@@ -116,6 +121,8 @@ function Invoke-MultipartFormDataUpload {
     }
     END { }
 }
+
+[String]$Server = ("http://{0}:{1}" -f $IpAddress, $Port)
 
 
 $interfacesFolder = Join-Path $PSScriptRoot "Interfaces"
@@ -312,6 +319,21 @@ foreach ($interface in (Get-ChildItem -path $interfacesFolder -Filter *.zip))
     #Might not be needed, but do it anyway..
     start-sleep -seconds 2
 }
+
+########################## Enable Interfaces ##########################
+$interfacesToEnable = @(
+    @{Domain = "Protocols.MqttBrokerService"},
+    @{Domain = "HomeAutomation.EchoBridge"},
+    @{Domain = "HomeAutomation.TexecomInterface"}
+)
+
+foreach ($interface in $interfacesToEnable) {
+    write-verbose ("Enabling interface: {0}" -f $interface.Domain)
+    $null = invoke-restMethod `
+         -uri ($Server + "/api/MIGService.Interfaces/$($interface.Domain)/IsEnabled.Set/1/") `
+         -verbose:$false
+}
+
 
 # write-verbose "installing interface using download"
 # Add-Type -AssemblyName System.Web
