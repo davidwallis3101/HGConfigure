@@ -146,19 +146,11 @@
         state: directory
         mode: 0755
 
-    # - name: Get Homegenie
-    #   unarchive:
-    #     src: https://github.com/Bounz/HomeGenie-BE/releases/download/V1.1.15/homegenie_1.1.15_all.tgz
-    #     #src: https://github.com/Bounz/HomeGenie-BE/releases/download/V1.1.16.5/HGBE_V1.1.16.5.zip
-    #     dest: /usr/local/bin/homegenie
-    #     creates: /usr/local/bin/homegenie/Homegenie.exe
-    #     remote_src: yes
-
-    # - name: Get Homegenie
-    #   unarchive:
-    #     src: HGBE_V1.1.17.30.zip
-    #     dest: /usr/local/bin/homegenie
-    #     creates: /usr/local/bin/homegenie/Homegenie.exe
+    - name: Get Homegenie
+      unarchive:
+        src: HGBE_V1.1.17.30.zip
+        dest: /usr/local/bin/homegenie
+        creates: /usr/local/bin/homegenie/Homegenie.exe
 
     - name: Create systemd file
       copy:
