@@ -146,12 +146,6 @@
         state: directory
         mode: 0755
 
-    - name: Get Homegenie
-      unarchive:
-        src: HGBE_V1.1.17.30.zip
-        dest: /usr/local/bin/homegenie
-        creates: /usr/local/bin/homegenie/Homegenie.exe
-
     - name: Create systemd file
       copy:
         dest: /etc/systemd/system/homegenie.service
