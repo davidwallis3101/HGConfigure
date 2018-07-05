@@ -1,15 +1,6 @@
 ---
 -
   hosts: all
-  roles:
-    -
-      items:
-        -
-          lines:
-            - "*.* @graylog:514;RSYSLOG_SyslogProtocol23Format"
-          name: 20-graylog
-      role: xdrum.rsyslog
-      rsyslog_default_config: "false"
   tasks:
     -
       apt:
@@ -181,3 +172,12 @@
         dest: /etc/sudoers.d/020_davidw-nopasswd
         mode: 288
       name: "Add sudoers entry to allow admin user passwordless sudo"
+  roles:
+    -
+      items:
+        -
+          lines:
+            - "*.* @graylog:514;RSYSLOG_SyslogProtocol23Format"
+          name: 20-graylog
+      role: xdrum.rsyslog
+      rsyslog_default_config: "false"
