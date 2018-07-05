@@ -1,6 +1,15 @@
 ---
 -
   hosts: all
+  roles:
+    -
+      items:
+        -
+          lines:
+            - "*.* @graylog:514;RSYSLOG_SyslogProtocol23Format"
+          name: 20-graylog
+      role: xdrum.rsyslog
+      rsyslog_default_config: "false"
   tasks:
     -
       apt:
