@@ -1,204 +1,174 @@
-#!/usr/bin/env ansible-playbook
 ---
-- hosts: all
+-
+  hosts: all
   tasks:
-    - name: "update and upgrade apt packages"
-      become: true
+    -
       apt:
-        upgrade: yes
-        update_cache: yes
-        # cache_valid_time: 86400 #One day
-
-    - name: Configure gpu memory options in /boot/config.txt
+        update_cache: true
+        upgrade: true
+      become: true
+      name: "update and upgrade apt packages"
+    -
       lineinfile:
         dest: /boot/config.txt
-        regexp: "^#?gpu_mem"
-        line: "gpu_mem=16"
         insertafter: EOF
+        line: gpu_mem=16
+        regexp: "^#?gpu_mem"
         state: present
-        # TODO add notify and handler to reboot?
-
-    - name: restart server if required
-      shell: 'sleep 2 && shutdown -r now "Reboot triggered by Ansible" removes=/var/run/reboot-required'
+      name: "Configure gpu memory options in /boot/config.txt"
+    -
       async: 1
-      poll: 0
       become: true
-
-    - name: Wait for server to restart
+      name: "restart server if required"
+      poll: 0
+      shell: "sleep 2 && shutdown -r now \"Reboot triggered by Ansible\" removes=/var/run/reboot-required"
+    -
       become: false
       local_action:
-        module: wait_for
-          host={{ inventory_hostname }}
-          port=22
-          delay=10
-
-    - name: set timezone to Europe/London
+        module: "wait_for host={{ inventory_hostname }} port=22 delay=10"
+      name: "Wait for server to restart"
+    -
+      name: "set timezone to Europe/London"
       timezone:
         name: Europe/London
-
-    - name: Ensure the hostname is set correctly
-      become: yes
+    -
+      become: true
       hostname:
         name: understairs
-
-    - name: install fail2ban package
+      name: "Ensure the hostname is set correctly"
+    -
       apt:
         name: fail2ban
-        update_cache: yes
         state: present
-
-    - name: copy fail2ban configuration
+        update_cache: true
+      name: "install fail2ban package"
+    -
       become: true
       copy:
-        src: /etc/fail2ban/jail.conf
         dest: /etc/fail2ban/jail.local
-        remote_src: yes
-
-    - name: Install the package "dirmngr"
+        remote_src: true
+        src: /etc/fail2ban/jail.conf
+      name: "copy fail2ban configuration"
+    -
       apt:
         name: dirmngr
         state: present
-
-    - name: Add an apt key by id from a keyserver
+      name: "Install the package \"dirmngr\""
+    -
       apt_key:
-        keyserver: keyserver.ubuntu.com
         id: 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
-
-    # - name: Add mono 5.4.1.6 repo
-    #   apt_repository:
-    #     repo: deb http://download.mono-project.com/repo/debian raspbianstretch/snapshots/5.4.1.6 main
-    #     state: present
-    #     filename: 'mono-official.list'
-
-    - name: Add mono repo
+        keyserver: keyserver.ubuntu.com
+      name: "Add an apt key by id from a keyserver"
+    -
       apt_repository:
-        repo: deb http://download.mono-project.com/repo/debian stable-raspbianstretch main
+        filename: mono-official
+        repo: "deb http://download.mono-project.com/repo/debian stable-raspbianstretch main"
         state: present
-        filename: 'mono-official'
-
-    - name: Update repositories cache and install "mono-complete" package
+      name: "Add mono repo"
+    -
       apt:
         name: mono-complete
-        update_cache: yes
-
-    - name: install dot net core / powershell pre-req packages
-      apt: name={{item}} state=latest update_cache=yes
+        update_cache: true
+      name: "Update repositories cache and install \"mono-complete\" package"
+    -
+      apt: "name={{item}} state=latest update_cache=yes"
+      name: "install dot net core / powershell pre-req packages"
       with_items:
-      - libunwind8
-      - libunwind8-dev
-      - gettext
-      - libicu-dev
-      - liblttng-ust-dev
-      - libcurl4-openssl-dev
-      - uuid-dev
-
-    - name: Create dotnet directory if it does not exist
+        - libunwind8
+        - libunwind8-dev
+        - gettext
+        - libicu-dev
+        - liblttng-ust-dev
+        - libcurl4-openssl-dev
+        - uuid-dev
+    -
       file:
+        mode: 493
         path: /home/pi/dotnet
         state: directory
-        mode: 0755
-
-    - name: Get dotnet core
+      name: "Create dotnet directory if it does not exist"
+    -
+      name: "Get dotnet core"
       unarchive:
-        src: https://github.com/dotnet/core-setup/files/716356/dotnet-ubuntu.16.04-arm.1.2.0-beta-001291-00.tar.gz
-        dest: /home/pi/dotnet
         creates: /home/pi/dotnet
-        remote_src: yes
-
-    # export PATH=$PATH:$HOME/dotnet
-
-    - name: Create powershell directory if it does not exist
+        dest: /home/pi/dotnet
+        remote_src: true
+        src: "https://github.com/dotnet/core-setup/files/716356/dotnet-ubuntu.16.04-arm.1.2.0-beta-001291-00.tar.gz"
+    -
       file:
+        mode: 493
         path: /home/pi/powershell
         state: directory
-        mode: 0755
-
-    - name: Get Powershell 6 core
+      name: "Create powershell directory if it does not exist"
+    -
+      name: "Get Powershell 6 core"
       unarchive:
-        src: https://github.com/PowerShell/PowerShell/releases/download/v6.0.1/powershell-6.0.1-linux-arm32.tar.gz
-        dest: /home/pi/powershell
         creates: /home/pi/powershell
-        remote_src: yes
-
-    - name: creating user davidw and adding to groups
+        dest: /home/pi/powershell
+        remote_src: true
+        src: "https://github.com/PowerShell/PowerShell/releases/download/v6.0.1/powershell-6.0.1-linux-arm32.tar.gz"
+    -
+      name: "creating user davidw and adding to groups"
       user:
+        append: true
+        groups: "pi,adm,dialout,cdrom,sudo,audio,video,plugdev,games,users,input,netdev,spi,i2c,gpio"
         name: davidw
         shell: /bin/bash
-        groups: pi,adm,dialout,cdrom,sudo,audio,video,plugdev,games,users,input,netdev,spi,i2c,gpio
-        append: yes
-
-    - name: Set authorized key for user davidw
+    -
       authorized_key:
-        user: davidw
+        key: "https://github.com/davidwallis3101.keys"
         state: present
-        key: https://github.com/davidwallis3101.keys
-
-    # - name: Remove default 'pi' user
-    #   become: yes
-    #   user:
-    #     name: pi
-    #     state: absent
-    #     remove: yes
-
-    - name: Create homegenie directory if it does not exist
+        user: davidw
+      name: "Set authorized key for user davidw"
+    -
       file:
+        mode: 493
         path: /usr/local/bin/homegenie
         state: directory
-        mode: 0755
-
-    - name: Get Homegenie
+      name: "Create homegenie directory if it does not exist"
+    -
+      name: "Get Homegenie"
       unarchive:
-        src: HGBE_V1.1.17.30.zip
-        dest: /usr/local/bin/homegenie
         creates: /usr/local/bin/homegenie/Homegenie.exe
-
-    - name: Create systemd file
+        dest: /usr/local/bin/homegenie
+        src: HGBE_V1.1.17.30.zip
+    -
       copy:
-        dest: /etc/systemd/system/homegenie.service
         content: |
-          [Unit]
-          Description=HomeGenie Automation Server
-          After=network.target
+            [Unit]
+            Description=HomeGenie Automation Server
+            After=network.target
 
-          [Service]
-          WorkingDirectory=/usr/local/bin/homegenie
-          ExecStart=/usr/bin/mono /usr/local/bin/homegenie/HomeGenie.exe --log
-          ExecStop=/usr/local/bin/homegenie/homegenie/homegenie_stop.sh
-          Restart=always
-          TimeoutStopSec=90
+            [Service]
+            WorkingDirectory=/usr/local/bin/homegenie
+            ExecStart=/usr/bin/mono /usr/local/bin/homegenie/HomeGenie.exe --log
+            ExecStop=/usr/local/bin/homegenie/homegenie/homegenie_stop.sh
+            Restart=always
+            TimeoutStopSec=90
 
-          [Install]
-          WantedBy=multi-user.target
-
-    - name: Enable service homegenie
+            [Install]
+            WantedBy=multi-user.target
+        dest: /etc/systemd/system/homegenie.service
+      name: "Create systemd file"
+    -
+      name: "Enable service homegenie"
       systemd:
+        enabled: true
+        masked: false
         name: homegenie
-        enabled: yes
-        masked: no
-
-    - name: start homegenie service if not running
-      systemd:
-        state=started
-        name=homegenie
-
-    - name: Disable SSH Password logins
-      become: yes
+    -
+      name: "start homegenie service if not running"
+      systemd: "state=started name=homegenie"
+    -
+      become: true
       lineinfile:
+        line: "PasswordAuthentication no"
         path: /etc/ssh/sshd_config
-        regexp: '^#?PasswordAuthentication'
-        line: 'PasswordAuthentication no'
-      # notify: restart ssh
-
-    - name: Add sudoers entry to allow admin user passwordless sudo
+        regexp: "^#?PasswordAuthentication"
+      name: "Disable SSH Password logins"
+    -
       copy:
         content: "davidw ALL=(ALL) NOPASSWD: ALL"
-        dest: "/etc/sudoers.d/020_davidw-nopasswd"
-        mode: 0440
-
-  # roles:
-  #   - role: xdrum.rsyslog
-  #     rsyslog_default_config: "false"
-  #     items:
-  #       - name: "20-graylog"
-  #         lines:
-  #           - '*.* @graylog:514;RSYSLOG_SyslogProtocol23Format'
+        dest: /etc/sudoers.d/020_davidw-nopasswd
+        mode: 288
+      name: "Add sudoers entry to allow admin user passwordless sudo"

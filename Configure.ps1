@@ -12,7 +12,7 @@
     The hg server port
 
 .EXAMPLE
-    PS C:\> Configure.ps1 -Server "http://127.0.0.1:80"
+    PS C:\> Configure.ps1 -IpAddress 192.168.0.1 -Port 80
 
 .LINK
     https://github.com/davidwallis3101/HGConfigure
