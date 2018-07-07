@@ -1,0 +1,319 @@
+---
+-
+  hosts: all
+  tasks:
+    -
+      apt:
+        update_cache: true
+        upgrade: true
+      become: true
+      name: "update and upgrade apt packages"
+    -
+      lineinfile:
+        dest: /boot/config.txt
+        insertafter: EOF
+        line: gpu_mem=16
+        regexp: "^#?gpu_mem"
+        state: present
+      name: "Configure gpu memory options in /boot/config.txt"
+    -
+      lineinfile:
+        dest: /boot/config.txt
+        insertafter: EOF
+        line: enable_uart=1
+        regexp: "^#?enable_uart"
+        state: present
+      name: "Enable UART for Pi3 and Jessie or later"
+    -
+      lineinfile:
+        dest: /boot/config.txt
+        insertafter: EOF
+        line: dtoverlay=sc16is752-spi1,24
+        regexp: "^#?dtoverlay=sc16is752-spi"
+        state: present
+      name: "Enable UART for Pi3 and Jessie or later"
+    -
+      lineinfile:
+        dest: /boot/config.txt
+        insertafter: EOF
+        line: dtoverlay=i2c-rtc,mcp7941x
+        regexp: "^#?dtoverlay=i2c-rtc,mcp7941x"
+        state: present
+      name: "Enable support for RTC chip"
+    -
+      lineinfile:
+        dest: /boot/config.txt
+        insertafter: EOF
+        line: dtoverlay=pi3-act-led, gpio=26
+        regexp: "^#?dtoverlay=pi3-act-led"
+        state: present
+      name: "move ACT LED function to GPIO26"
+    -
+      lineinfile:
+        dest: /boot/config.txt
+        insertafter: EOF
+        line: dtoverlay=pi3-miniuart-bt
+        regexp: "^#?dtoverlay=pi3-miniuart-bt"
+        state: present
+      name: "swap UART and PL011UART"
+    -
+      lineinfile:
+        dest: /boot/config.txt
+        insertafter: EOF
+        line: dtoverlay=pi3-disable-wifi
+        regexp: "^#?dtoverlay=pi3-disable-wifi"
+        state: present
+      name: "disable wifi"
+    -
+      lineinfile:
+        dest: /boot/config.txt
+        insertafter: EOF
+        line: dtoverlay=pi3-disable-bt
+        regexp: "^#?dtoverlay=pi3-disable-bt"
+        state: present
+      name: "disable bluetooth"
+    -
+      name: 'Enable I2C'
+      shell: "raspi-config nonint do_i2c 0"
+      become: yes
+    -
+      name: "Enable SPI"
+      shell: "raspi-config nonint do_spi 0"
+      become: yes
+    -
+      name: Enable serial
+      shell: "raspi-config nonint do_serial 0"
+      become: yes
+    -
+      lineinfile:
+        dest: /etc/modules
+        insertafter: EOF
+        line: rtc-mcp7941x
+        regexp: "^#?rtc-mcp7941x"
+        state: present
+      name: "add rtc-mcp7941x to /etc/modules"
+    -
+
+#Edit /boot/cmdline.txt and remove the text console=serial0,115200 to allow applications to use serial port
+
+
+
+
+# Edit /lib/udev/hwclock-set and comment out (add # to start of lines) the lines:
+# if [ -e /run/systemd/system ] ; then
+#     exit 0
+# fi
+
+# Reboot and check that the Pi has correct time from network. Then optionally manually set HW clock with sudo hwclock -w to write system time to HW clock. The Pi will automatically load the time/date from the HW clock at boot. This can can be forced manually with sudo hwclock -r to set the system clock from the HW clock. The Pi does an NTP update of system clock at boot, and then every 1024 secs (17 mins) thereafter, and sets the RTC from this.
+
+#Add permanent aliases for the SPI UARTs (Domoticz does not show port names like "ttySC1"):
+#create a new udev rules file /etc/udev/rules.d/98-minibms.rules with:
+# KERNEL=="ttySC0" SYMLINK="serial2"
+# KERNEL=="ttySC1" SYMLINK="serial3"
+
+#Check for the aliases serial2 and serial3:
+#ls -l /dev
+
+# Install NGINX (and php-fpm if required. On Raspian Stretch this will install PHP7.0)
+# sudo apt install nginx php-fpm
+# Create a new NGINX config file based on the default config:
+# cd /etc/nginx/sites-available
+# sudo cp default /etc/nginx/conf.d/nginx-machinon
+
+# Update the new nginx-machinon.conf file with the content below:
+# # pass PHP scripts to FastCGI server
+# #
+# location ~ \.php$ {
+#     include snippets/fastcgi-php.conf;
+#     #
+#     # With php-fpm (or other unix sockets):
+#     fastcgi_pass unix:/var/run/php/php7.0-fpm.sock;
+#     # With php-cgi (or other tcp sockets):`
+#     #fastcgi_pass 127.0.0.1:9000;
+# }
+
+# Copy the config forms PHP files and resources from https://github.com/EdddieN/machinon/tree/master/files/config-forms to the NGINX web pages directory, under a "config" subdirectory (typically /var/www/html/config/), and set file/directory permissions to allow NGINX www-data user to access the files and execute the .sh script:
+# sudo chown -R www-data /var/www/html
+# sudo chmod -R 770 /var/www/html/
+# sudo usermod -a -G dialout www-data
+# sudo usermod -a -G www-data pi
+
+
+# Proxy Homegenie with NGINX for SSL
+
+
+# Copy the scripts from https://github.com/EdddieN/machinon/tree/master/files/scripts to a suitable directory on the Pi (eg home folder /home/pi/), and make them executable with:
+
+# sudo chmod ug+x *.sh
+
+
+
+      async: 1
+      become: true
+      name: "restart server if required"
+      poll: 0
+      shell: "sleep 2 && shutdown -r now \"Reboot triggered by Ansible\" removes=/var/run/reboot-required"
+    -
+      become: false
+      local_action:
+        module: "wait_for host={{ inventory_hostname }} port=22 delay=10"
+      name: "Wait for server to restart"
+    -
+      name: "set timezone to Europe/London"
+      timezone:
+        name: Europe/London
+    -
+      become: true
+      hostname:
+        name: machinon
+      name: "Ensure the hostname is set correctly"
+    -
+      apt:
+        name: fail2ban
+        state: present
+        update_cache: true
+      name: "install fail2ban package"
+    -
+      become: true
+      copy:
+        dest: /etc/fail2ban/jail.local
+        remote_src: true
+        src: /etc/fail2ban/jail.conf
+      name: "copy fail2ban configuration"
+    -
+      apt:
+        name: dirmngr
+        state: present
+      name: "Install the package \"dirmngr\""
+    -
+      apt_key:
+        id: 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
+        keyserver: keyserver.ubuntu.com
+      name: "Add an apt key by id from a keyserver"
+    -
+      apt_repository:
+        filename: mono-official
+        repo: "deb http://download.mono-project.com/repo/debian stable-raspbianstretch main"
+        state: present
+      name: "Add mono repo"
+    -
+      apt:
+        name: mono-complete
+        update_cache: true
+      name: "Update repositories cache and install \"mono-complete\" package"
+    -
+      apt:
+        name: avrdude
+        update_cache: true
+      name: "install avrdude package"
+    -
+      apt: "name={{item}} state=latest update_cache=yes"
+      name: "install dot net core / powershell pre-req packages"
+      with_items:
+        - libunwind8
+        - libunwind8-dev
+        - gettext
+        - libicu-dev
+        - liblttng-ust-dev
+        - libcurl4-openssl-dev
+        - uuid-dev
+    -
+      file:
+        mode: 493
+        path: /home/pi/dotnet
+        state: directory
+      name: "Create dotnet directory if it does not exist"
+    -
+      name: "Get dotnet core"
+      unarchive:
+        creates: /home/pi/dotnet
+        dest: /home/pi/dotnet
+        remote_src: true
+        src: "https://github.com/dotnet/core-setup/files/716356/dotnet-ubuntu.16.04-arm.1.2.0-beta-001291-00.tar.gz"
+    -
+      file:
+        mode: 493
+        path: /home/pi/powershell
+        state: directory
+      name: "Create powershell directory if it does not exist"
+    -
+      name: "Get Powershell 6 core"
+      unarchive:
+        creates: /home/pi/powershell
+        dest: /home/pi/powershell
+        remote_src: true
+        src: "https://github.com/PowerShell/PowerShell/releases/download/v6.0.1/powershell-6.0.1-linux-arm32.tar.gz"
+    -
+      name: "creating user davidw and adding to groups"
+      user:
+        append: true
+        groups: "pi,adm,dialout,cdrom,sudo,audio,video,plugdev,games,users,input,netdev,spi,i2c,gpio"
+        name: davidw
+        shell: /bin/bash
+    -
+      authorized_key:
+        key: "https://github.com/davidwallis3101.keys"
+        state: present
+        user: davidw
+      name: "Set authorized key for user davidw"
+    -
+      file:
+        mode: 493
+        path: /usr/local/bin/homegenie
+        state: directory
+      name: "Create homegenie directory if it does not exist"
+    -
+      name: "Get Homegenie"
+      unarchive:
+        creates: /usr/local/bin/homegenie/Homegenie.exe
+        dest: /usr/local/bin/homegenie
+        src: HGBE_V1.1.17.30.zip
+    -
+      copy:
+        content: |
+            [Unit]
+            Description=HomeGenie Automation Server
+            After=network.target
+
+            [Service]
+            WorkingDirectory=/usr/local/bin/homegenie
+            ExecStart=/usr/bin/mono /usr/local/bin/homegenie/HomeGenie.exe --log
+            ExecStop=/usr/local/bin/homegenie/homegenie/homegenie_stop.sh
+            Restart=always
+            TimeoutStopSec=90
+
+            [Install]
+            WantedBy=multi-user.target
+        dest: /etc/systemd/system/homegenie.service
+      name: "Create systemd file"
+    -
+      name: "Enable service homegenie"
+      systemd:
+        enabled: true
+        masked: false
+        name: homegenie
+    -
+      name: "start homegenie service if not running"
+      systemd: "state=started name=homegenie"
+    -
+      become: true
+      lineinfile:
+        line: "PasswordAuthentication no"
+        path: /etc/ssh/sshd_config
+        regexp: "^#?PasswordAuthentication"
+      name: "Disable SSH Password logins"
+    -
+      copy:
+        content: "davidw ALL=(ALL) NOPASSWD: ALL"
+        dest: /etc/sudoers.d/020_davidw-nopasswd
+        mode: 288
+      name: "Add sudoers entry to allow admin user passwordless sudo"
+  roles:
+    -
+      items:
+        -
+          lines:
+            - "*.* @graylog:514;RSYSLOG_SyslogProtocol23Format"
+          name: 20-graylog
+      role: xdrum.rsyslog
+      rsyslog_default_config: "false"
