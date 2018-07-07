@@ -242,7 +242,10 @@
       name: Copy the nginx configuration file
       copy: src=files/nginx.conf
             dest=/etc/nginx/conf.d/nginx-machinon
-
+    -
+      name:    restart nginx
+      service: name=nginx state=restarted
+      become:  yes
 
     # Copy the config forms PHP files and resources from https://github.com/EdddieN/machinon/tree/master/files/config-forms to the NGINX web pages directory, under a "config" subdirectory (typically /var/www/html/config/), and set file/directory permissions to allow NGINX www-data user to access the files and execute the .sh script:
     # sudo chown -R www-data /var/www/html
