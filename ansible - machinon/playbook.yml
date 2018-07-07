@@ -121,29 +121,7 @@
 #Check for the aliases serial2 and serial3:
 #ls -l /dev
 
-# Install NGINX (and php-fpm if required. On Raspian Stretch this will install PHP7.0)
-# sudo apt install nginx php-fpm
-# Create a new NGINX config file based on the default config:
-# cd /etc/nginx/sites-available
-# sudo cp default /etc/nginx/conf.d/nginx-machinon
 
-# Update the new nginx-machinon.conf file with the content below:
-# # pass PHP scripts to FastCGI server
-# #
-# location ~ \.php$ {
-#     include snippets/fastcgi-php.conf;
-#     #
-#     # With php-fpm (or other unix sockets):
-#     fastcgi_pass unix:/var/run/php/php7.0-fpm.sock;
-#     # With php-cgi (or other tcp sockets):`
-#     #fastcgi_pass 127.0.0.1:9000;
-# }
-
-# Copy the config forms PHP files and resources from https://github.com/EdddieN/machinon/tree/master/files/config-forms to the NGINX web pages directory, under a "config" subdirectory (typically /var/www/html/config/), and set file/directory permissions to allow NGINX www-data user to access the files and execute the .sh script:
-# sudo chown -R www-data /var/www/html
-# sudo chmod -R 770 /var/www/html/
-# sudo usermod -a -G dialout www-data
-# sudo usermod -a -G www-data pi
 
 
 # Proxy Homegenie with NGINX for SSL
@@ -254,14 +232,29 @@
       apt:
         name: nginx
         update_cache: true
-        state: latest
       name: "Install nginx"
       # https://reinhard.codes/2017/01/27/setting-up-nginx-and-letsencrypt-on-a-homeserver-using-ansible/
+    -
+      name: Configure nginx log rotation
+      copy: src=files/nginx.logrotate
+            dest=/etc/logrotate.d/nginx
+    -
+      name: Copy the nginx configuration file
+      copy: src=files/nginx.conf
+            dest=/etc/nginx/conf.d/nginx-machinon
+
+
+    # Copy the config forms PHP files and resources from https://github.com/EdddieN/machinon/tree/master/files/config-forms to the NGINX web pages directory, under a "config" subdirectory (typically /var/www/html/config/), and set file/directory permissions to allow NGINX www-data user to access the files and execute the .sh script:
+    # sudo chown -R www-data /var/www/html
+    # sudo chmod -R 770 /var/www/html/
+    # sudo usermod -a -G dialout www-data
+    # sudo usermod -a -G www-data pi
+
+
     -
       apt:
         name: php-fpm
         update_cache: true
-        state: latest
       name: "Install php-fpm"
     -
       name: "creating user davidw and adding to groups"
