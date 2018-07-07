@@ -240,8 +240,8 @@
             dest=/etc/logrotate.d/nginx
     -
       name: Copy the nginx configuration file
-      copy: src=files/nginx.conf
-            dest=/etc/nginx/conf.d/nginx-machinon
+      copy: src=files/nginx-machinon.conf
+            dest=/etc/nginx/conf.d/nginx-machinon.conf
     -
       name:    restart nginx
       service: name=nginx state=restarted
