@@ -93,7 +93,14 @@
         state: present
       name: "add rtc-mcp7941x to /etc/modules"
     -
-
+      lineinfile:
+        dest: /boot/cmdline.txt
+        insertafter: EOF
+        line: "dwc_otg.lpm_enable=0 root=PARTUUID=f28ee78a-02 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait"
+        regexp: "^#?dwc_otg.lpm_enable=0 console=serial0,115200 console=tty1"
+        state: present
+      name: "remove serial from console"
+    -
 #Edit /boot/cmdline.txt and remove the text console=serial0,115200 to allow applications to use serial port
 
 
@@ -243,6 +250,19 @@
         dest: /home/pi/powershell
         remote_src: true
         src: "https://github.com/PowerShell/PowerShell/releases/download/v6.0.1/powershell-6.0.1-linux-arm32.tar.gz"
+    -
+      apt:
+        name: nginx
+        update_cache: true
+        state: latest
+      name: "Install nginx"
+      # https://reinhard.codes/2017/01/27/setting-up-nginx-and-letsencrypt-on-a-homeserver-using-ansible/
+    -
+      apt:
+        name: php-fpm
+        update_cache: true
+        state: latest
+      name: "Install php-fpm"
     -
       name: "creating user davidw and adding to groups"
       user:
