@@ -325,13 +325,13 @@
     -
       name: "start homegenie service if not running"
       systemd: "state=started name=homegenie"
-    -
-      become: true
-      lineinfile:
-        line: "PasswordAuthentication no"
-        path: /etc/ssh/sshd_config
-        regexp: "^#?PasswordAuthentication"
-      name: "Disable SSH Password logins"
+    # -
+    #   become: true
+    #   lineinfile:
+    #     line: "PasswordAuthentication no"
+    #     path: /etc/ssh/sshd_config
+    #     regexp: "^#?PasswordAuthentication"
+    #   name: "Disable SSH Password logins"
     -
       copy:
         content: "davidw ALL=(ALL) NOPASSWD: ALL"
