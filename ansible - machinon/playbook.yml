@@ -247,10 +247,10 @@
       become: yes
       command: chmod -R 770 /var/www/html/
     -
-      name: nginx | copy shared files
+      name: nginx copy config files
       copy:
         src:   '{{ item }}'
-        dest:  '{{ app.path }}/var/www/html/config/'
+        dest:  '/var/www/html/config/'
         # owner: 'www-data'
         # group: '{{ user.name }}'
         mode: 755
