@@ -243,17 +243,31 @@
       copy: src=files/nginx-machinon.conf
             dest=/etc/nginx/conf.d/nginx-machinon.conf
     -
+      name: set permissions
+      become: yes
+      command: chmod -R 770 /var/www/html/
+    -
+      name: nginx | copy shared files
+      copy:
+        src:   '{{ item }}'
+        dest:  '{{ app.path }}/var/www/html/config/'
+        # owner: 'www-data'
+        # group: '{{ user.name }}'
+        mode: 755
+        with_fileglob:
+          '{{ role_path }}/files/config/*'
+    -
+      name: usermod
+      become: yes
+      command: usermod -a -G dialout www-data
+    -
+      name: usermod
+      become: yes
+      command: sudo usermod -a -G www-data pi
+    -
       name:    restart nginx
       service: name=nginx state=restarted
       become:  yes
-
-    # Copy the config forms PHP files and resources from https://github.com/EdddieN/machinon/tree/master/files/config-forms to the NGINX web pages directory, under a "config" subdirectory (typically /var/www/html/config/), and set file/directory permissions to allow NGINX www-data user to access the files and execute the .sh script:
-    # sudo chown -R www-data /var/www/html
-    # sudo chmod -R 770 /var/www/html/
-    # sudo usermod -a -G dialout www-data
-    # sudo usermod -a -G www-data pi
-
-
     -
       apt:
         name: php-fpm
