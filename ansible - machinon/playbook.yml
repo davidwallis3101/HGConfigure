@@ -97,7 +97,7 @@
         dest: /boot/cmdline.txt
         insertafter: EOF
         line: "dwc_otg.lpm_enable=0 root=PARTUUID=f28ee78a-02 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait"
-        regexp: "^#?dwc_otg.lpm_enable=0 console=serial0,115200 console=tty1"
+        regexp: "^#?dwc_otg.lpm_enable=0 console=serial0,115200 console=tty1 root=PARTUUID=f28ee78a-02 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait"
         state: present
       name: "remove serial from console"
     -
