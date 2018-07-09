@@ -256,6 +256,15 @@
       with_fileglob:
           - 'files/config/*'
     -
+      name: nginx copy css files
+      copy:
+        src:   '{{ item }}'
+        dest:  '/var/www/html/config/css'
+        owner: 'www-data'
+        mode: 755
+      with_fileglob:
+          - 'files/config/css/*'
+    -
       name: usermod
       become: yes
       command: usermod -a -G dialout www-data
